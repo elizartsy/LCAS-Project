@@ -40,6 +40,12 @@
 #define D6T_CMD 0x4D  // for D6T-32L-01A, compensated output.
 #define D6T_SET_ADD 0x01
 
+// for use with PCA9546 4-channel I2C multiplexer.
+#define D6T_1 0x70 
+#define D6T_2 0x71
+#define D6T_3 0x72
+#define D6T_4 0x73
+
 #define N_ROW 32
 #define N_PIXEL (32 * 32)
 #define N_READ ((N_PIXEL + 1) * 2 + 1)
