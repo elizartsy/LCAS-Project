@@ -1,2 +1,2 @@
 # LCAS-Project
-Laser Combustability Avoidance Sstem
+Laser Combustability Avoidance System
