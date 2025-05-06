@@ -1,163 +1,168 @@
-/*
- * Thermal Array Display using libgpiod for I2C bit-banging and OpenCV for visualization
- *
- * Wiring assumptions:
- * - TCA9546A multiplexer on hardware I2C (SDA=GPIO2, SCL=GPIO3)
- * - Four D6T-32L sensors on channels 0..3 of the multiplexer
- * - libgpiod-controlled GPIO lines for bit-banged I2C on SDA/SCL:
- *     * Change `GPIOCHIP_NAME`, `SDA_LINE`, and `SCL_LINE` to match your wiring.
- *
- * Compile with:
- *   g++ thermal_display.cpp -std=c++17 -lgpiod -lopencv_core -lopencv_imgproc -lopencv_highgui -o thermal_display
- */
-
-#include <gpiod.h>
 #include <opencv2/opencv.hpp>
+#include <stdio.h>
+#include <stdint.h>
+#include <fcntl.h>
 #include <unistd.h>
-#include <cstdint>
-#include <vector>
-#include <string>
-#include <cstdio>
+#include <string.h>
+#include <errno.h>
+#include <sys/ioctl.h>
+#include <linux/i2c-dev.h>
+#include <time.h>
 
-// Constants for sensors & multiplexer
-static constexpr uint8_t TCA_ADDR    = 0x70;  // 7-bit address of TCA9546A
-static constexpr uint8_t D6T_ADDR    = 0x0A;  // 7-bit address of D6T-32L
-static constexpr uint8_t D6T_CMD     = 0x4D;
-static constexpr int     N_ROW       = 32;
-static constexpr int     N_PIXELS    = N_ROW*N_ROW;
-static constexpr int     N_READ      = (N_PIXELS+1)*2 + 1;
+#define D6T_ADDR      0x0A      // fixed address of the Melexis D6T
+#define D6T_CMD       0x4D
+#define D6T_SET_ADD   0x01
+#define D6T_IIR       0x00
+#define D6T_AVERAGE   0x04
 
-// libgpiod bitbang parameters
-static constexpr char    GPIOCHIP_NAME[] = "gpiochip0";
-static constexpr unsigned int SDA_LINE = 2;   // BCM GPIO2 -> line offset
-static constexpr unsigned int SCL_LINE = 3;   // BCM GPIO3 -> line offset
-static constexpr useconds_t I2C_DELAY_USEC = 5;
+#define TCA_ADDR      0x70      // address of your TCA9548A (A0–A2 tied to select this)
+#define MAX_CHANNELS  8
 
-class BitBangI2C {
-public:
-    BitBangI2C(const char *chipname, unsigned int sda_offset, unsigned int scl_offset) {
-        chip = gpiod_chip_open_by_name(chipname);
-        sda  = gpiod_chip_get_line(chip, sda_offset);
-        scl  = gpiod_chip_get_line(chip, scl_offset);
-        gpiod_line_request_output(sda, "i2c", 1);
-        gpiod_line_request_output(scl, "i2c", 1);
-    }
+#define N_ROW         32
+#define N_PIXEL       (N_ROW * N_ROW)
+#define N_READ        ((N_PIXEL + 1) * 2 + 1) // PTAT + all pixels + PEC byte
 
-    ~BitBangI2C() {
-        gpiod_line_release(sda);
-        gpiod_line_release(scl);
-        gpiod_chip_close(chip);
-    }
+#define I2C_DEV       "/dev/i2c-1"
 
-    void start() {
-        set_sda(1); set_scl(1); delay();
-        set_sda(0); delay();
-        set_scl(0); delay();
-    }
+uint8_t  rbuf[N_READ];
+double   ptat;
+double   pix_data[N_PIXEL];
 
-    void stop() {
-        set_sda(0); set_scl(1); delay();
-        set_sda(1); delay();
-    }
-
-    bool write_byte(uint8_t data) {
-        for(int i=0; i<8; ++i) {
-            set_sda((data & 0x80) != 0);
-            delay(); set_scl(1); delay(); set_scl(0); delay();
-            data <<= 1;
-        }
-        gpiod_line_release(sda);
-        gpiod_line_request_input(sda, "i2c_ack");
-        delay(); set_scl(1); delay();
-        int ack = gpiod_line_get_value(sda);
-        set_scl(0); delay();
-        gpiod_line_release(sda);
-        gpiod_line_request_output(sda, "i2c", 1);
-        return (ack == 0);
-    }
-
-    bool read_bytes(uint8_t *buf, int length) {
-        for(int i=0; i<length; ++i) {
-            uint8_t byte = 0;
-            gpiod_line_release(sda);
-            gpiod_line_request_input(sda, "i2c_read");
-            for(int b=0; b<8; ++b) {
-                set_scl(1); delay();
-                byte = (byte << 1) | gpiod_line_get_value(sda);
-                set_scl(0); delay();
-            }
-            buf[i] = byte;
-            gpiod_line_release(sda);
-            gpiod_line_request_output(sda, "i2c", (i<length-1)?0:1);
-            delay(); set_scl(1); delay(); set_scl(0); delay();
-        }
-        return true;
-    }
-
-private:
-    gpiod_chip *chip;
-    gpiod_line *sda;
-    gpiod_line *scl;
-
-    void set_sda(int v) { gpiod_line_set_value(sda, v); }
-    void set_scl(int v) { gpiod_line_set_value(scl, v); }
-    void delay()      { usleep(I2C_DELAY_USEC); }
-};
-
-bool select_channel(BitBangI2C &bus, uint8_t ch) {
-    bus.start();
-    bool ok = bus.write_byte((TCA_ADDR<<1)|0);
-    ok &= bus.write_byte(1 << ch);
-    bus.stop();
-    usleep(1000);
-    return ok;
+// Low-level I²C write; returns 0 on success
+int i2c_write(int fd, const uint8_t *data, size_t len) {
+    return write(fd, data, len) == (ssize_t)len ? 0 : -1;
 }
 
-bool read_d6t(BitBangI2C &bus, std::vector<double> &pixels) {
-    uint8_t rbuf[N_READ] = {0};
-    bus.start();
-    if (!bus.write_byte((D6T_ADDR<<1)|0)) { bus.stop(); return false; }
-    if (!bus.write_byte(D6T_CMD)) { bus.stop(); return false; }
-    bus.stop();
-    usleep(1000);
-    bus.start();
-    if (!bus.write_byte((D6T_ADDR<<1)|1)) { bus.stop(); return false; }
-    if (!bus.read_bytes(rbuf, N_READ)) { bus.stop(); return false; }
-    bus.stop();
-    for(int i=0; i<N_PIXELS; ++i) {
-        int16_t raw = static_cast<int16_t>((uint16_t)rbuf[2+2*i] | ((uint16_t)rbuf[3+2*i]<<8));
-        pixels[i] = raw / 10.0;
+// Low-level I²C read via register write-then-read; returns 0 on success
+int i2c_read_reg(int fd, uint8_t reg, uint8_t *buf, size_t len) {
+    if (write(fd, &reg, 1) != 1) return -1;
+    if (read(fd, buf, len) != (ssize_t)len) return -1;
+    return 0;
+}
+
+// CRC-8 (PEC) for Melexis D6T
+uint8_t calc_crc(uint8_t data) {
+    for (int i = 0; i < 8; i++) {
+        uint8_t temp = data;
+        data <<= 1;
+        if (temp & 0x80) data ^= 0x07;
+    }
+    return data;
+}
+
+// Check packet error code; returns true on error
+bool D6T_checkPEC(const uint8_t buf[], int n) {
+    uint8_t crc = calc_crc((D6T_ADDR << 1) | 1);
+    for (int i = 0; i < n; i++) {
+        crc = calc_crc(buf[i] ^ crc);
+    }
+    if (crc != buf[n]) {
+        fprintf(stderr, "PEC check failed: calc=0x%02X, got=0x%02X\n", crc, buf[n]);
+        return true;
+    }
+    return false;
+}
+
+// Convert two little-endian bytes at buf[n], buf[n+1] into signed int16
+int16_t conv16_le(const uint8_t* buf, int n) {
+    return (int16_t)(buf[n] | (buf[n + 1] << 8));
+}
+
+// Select one channel on the TCA9548A by writing (1<<channel) to it,
+// then switch the bus to the D6T sensor.
+bool select_channel(int fd, uint8_t channel) {
+    if (channel >= MAX_CHANNELS) {
+        fprintf(stderr, "Invalid TCA channel %u\n", channel);
+        return false;
+    }
+    uint8_t cmd = 1u << channel;
+
+    // Point at the switch
+    if (ioctl(fd, I2C_SLAVE, TCA_ADDR) < 0) {
+        perror("ioctl to TCA");
+        return false;
+    }
+    if (i2c_write(fd, &cmd, 1) < 0) {
+        perror("Write channel-select to TCA");
+        return false;
+    }
+    // small bus‐settle
+    usleep(5 * 1000);
+
+    // Point at the thermal sensor
+    if (ioctl(fd, I2C_SLAVE, D6T_ADDR) < 0) {
+        perror("ioctl to D6T");
+        return false;
     }
     return true;
 }
 
-int main() {
-    BitBangI2C bus(GPIOCHIP_NAME, SDA_LINE, SCL_LINE);
-    std::vector<double> pixels(N_PIXELS);
-
-    for(int ch=0; ch<4; ++ch) {
-        if(!select_channel(bus, ch)) {
-            fprintf(stderr, "Failed to select channel %d\n", ch);
-            continue;
-        }
-        usleep(50000);
-
-        if(!read_d6t(bus, pixels)) {
-            fprintf(stderr, "Failed to read sensor on channel %d\n", ch);
-            continue;
-        }
-
-        cv::Mat img(N_ROW, N_ROW, CV_32FC1, pixels.data());
-        cv::Mat img8;
-        img.convertTo(img8, CV_8UC1, 2.55);
-        cv::Mat colored;
-        cv::applyColorMap(img8, colored, cv::COLORMAP_INFERNO);
-
-        std::string title = "Sensor Channel " + std::to_string(ch);
-        cv::namedWindow(title, cv::WINDOW_AUTOSIZE);
-        cv::imshow(title, colored);
-        cv::waitKey(0);
-        cv::destroyWindow(title);
+// After selecting a channel, we need to do the D6T "initial setting"
+// exactly once per sensor.  This sets its internal averaging/IIR.
+void initialSetting(int fd) {
+    uint8_t dat[] = {
+        D6T_SET_ADD,
+        uint8_t(((D6T_IIR << 4) & 0xF0) | (0x0F & D6T_AVERAGE))
+    };
+    if (i2c_write(fd, dat, sizeof(dat)) < 0) {
+        perror("D6T initialSetting");
     }
+}
+
+void capture_and_display(int fd, uint8_t ch) {
+    // ch is 0-based here (0..7)
+    if (!select_channel(fd, ch)) return;
+
+    // Read N_READ bytes starting from the D6T_CMD register
+    for (int retry = 0; retry < 5; retry++) {
+        if (i2c_read_reg(fd, D6T_CMD, rbuf, N_READ) == 0) break;
+        usleep(60 * 1000);
+    }
+
+    if (D6T_checkPEC(rbuf, N_READ - 1)) return;
+
+    ptat = conv16_le(rbuf, 0) / 10.0;
+    for (int i = 0; i < N_PIXEL; i++) {
+        pix_data[i] = conv16_le(rbuf, 2 + 2*i) / 10.0;
+    }
+
+    cv::Mat therm(N_ROW, N_ROW, CV_64F, pix_data);
+    cv::Mat norm, color;
+
+    cv::normalize(therm, norm, 0, 255, cv::NORM_MINMAX);
+    norm.convertTo(norm, CV_8U);
+    cv::applyColorMap(norm, color, cv::COLORMAP_JET);
+
+    char win[32];
+    snprintf(win, sizeof(win), "Thermal Channel %u", ch+1);
+    cv::imshow(win, color);
+    cv::waitKey(1);
+}
+
+int main() {
+    int fd = open(I2C_DEV, O_RDWR);
+    if (fd < 0) {
+        perror("Open I2C device");
+        return 1;
+    }
+
+    // Run initialSetting on each channel once
+    for (uint8_t ch = 0; ch < 4; ch++) {
+        if (select_channel(fd, ch)) {
+            initialSetting(fd);
+            usleep(10 * 1000);
+        }
+    }
+
+    // Continuous capture
+    while (true) {
+        for (uint8_t ch = 0; ch < 4; ch++) {
+            capture_and_display(fd, ch);
+            printf("Captured channel %u. Press ENTER to continue…\n", ch+1);
+            getchar();
+        }
+    }
+
+    close(fd);
     return 0;
 }
