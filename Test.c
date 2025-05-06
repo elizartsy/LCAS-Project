@@ -68,8 +68,17 @@ int16_t conv16_le(const uint8_t* buf, int n) {
     return (int16_t)(buf[n] | (buf[n + 1] << 8));
 }
 
+// After selecting a channel, explicitly re-point to the D6T sensor
+bool point_to_D6T(int fd) {
+    if (ioctl(fd, I2C_SLAVE, D6T_ADDR) < 0) {
+        perror("ioctl to D6T_ADDR");
+        return false;
+    }
+    return true;
+}
+
 // Select one channel on the TCA9548A by writing (1<<channel) to it,
-// then switch the bus to the D6T sensor.
+// then wait for the switch to settle
 bool select_channel(int fd, uint8_t channel) {
     if (channel >= MAX_CHANNELS) {
         fprintf(stderr, "Invalid TCA channel %u\n", channel);
@@ -86,20 +95,17 @@ bool select_channel(int fd, uint8_t channel) {
         perror("Write channel-select to TCA");
         return false;
     }
-    // small bus‐settle
-    usleep(5 * 1000);
-
-    // Point at the thermal sensor
-    if (ioctl(fd, I2C_SLAVE, D6T_ADDR) < 0) {
-        perror("ioctl to D6T");
-        return false;
-    }
+    // Let the switch hardware settle (50 ms)
+    usleep(50 * 1000);
     return true;
 }
 
-// After selecting a channel, we need to do the D6T "initial setting"
-// exactly once per sensor.  This sets its internal averaging/IIR.
-void initialSetting(int fd) {
+// After selecting a channel, do the D6T "initial setting"
+void initialSetting(int fd, uint8_t ch) {
+    if (!select_channel(fd, ch)) return;
+    usleep(50 * 1000);
+    if (!point_to_D6T(fd)) return;
+
     uint8_t dat[] = {
         D6T_SET_ADD,
         uint8_t(((D6T_IIR << 4) & 0xF0) | (0x0F & D6T_AVERAGE))
@@ -109,16 +115,17 @@ void initialSetting(int fd) {
     }
 }
 
+// Capture, check PEC, and display the thermal image
 void capture_and_display(int fd, uint8_t ch) {
-    // ch is 0-based here (0..7)
     if (!select_channel(fd, ch)) return;
+    usleep(50 * 1000);
+    if (!point_to_D6T(fd)) return;
 
     // Read N_READ bytes starting from the D6T_CMD register
     for (int retry = 0; retry < 5; retry++) {
         if (i2c_read_reg(fd, D6T_CMD, rbuf, N_READ) == 0) break;
         usleep(60 * 1000);
     }
-
     if (D6T_checkPEC(rbuf, N_READ - 1)) return;
 
     ptat = conv16_le(rbuf, 0) / 10.0;
@@ -146,12 +153,9 @@ int main() {
         return 1;
     }
 
-    // Run initialSetting on each channel once
+    // Run initialSetting on each of the first 4 channels once
     for (uint8_t ch = 0; ch < 4; ch++) {
-        if (select_channel(fd, ch)) {
-            initialSetting(fd);
-            usleep(10 * 1000);
-        }
+        initialSetting(fd, ch);
     }
 
     // Continuous capture
