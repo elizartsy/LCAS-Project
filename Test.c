@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
+#include <signal.h>
 #include <time.h>
 
 #define D6T_ADDR      0x0A      // fixed address of the Melexis D6T
@@ -24,6 +25,7 @@
 
 #define I2C_DEV       "/dev/i2c-1"
 
+static int g_fd = -1;  // global for signal handler
 uint8_t  rbuf[N_READ];
 double   ptat;
 double   pix_data[N_PIXEL];
@@ -68,6 +70,19 @@ int16_t conv16_le(const uint8_t* buf, int n) {
     return (int16_t)(buf[n] | (buf[n + 1] << 8));
 }
 
+// Reset (disable) all TCA channels
+void reset_switch(int fd) {
+    if (ioctl(fd, I2C_SLAVE, TCA_ADDR) < 0) {
+        perror("ioctl to TCA for reset");
+        return;
+    }
+    uint8_t zero = 0x00;
+    if (i2c_write(fd, &zero, 1) < 0) {
+        perror("Write reset to TCA");
+    }
+    usleep(100 * 1000);
+}
+
 // After selecting a channel, explicitly re-point to the D6T sensor
 bool point_to_D6T(int fd) {
     if (ioctl(fd, I2C_SLAVE, D6T_ADDR) < 0) {
@@ -77,8 +92,7 @@ bool point_to_D6T(int fd) {
     return true;
 }
 
-// Select one channel on the TCA9548A by writing (1<<channel) to it,
-// then wait for the switch to settle
+// Select one channel on the TCA9548A by writing (1<<channel) to it
 bool select_channel(int fd, uint8_t channel) {
     if (channel >= MAX_CHANNELS) {
         fprintf(stderr, "Invalid TCA channel %u\n", channel);
@@ -86,7 +100,6 @@ bool select_channel(int fd, uint8_t channel) {
     }
     uint8_t cmd = 1u << channel;
 
-    // Point at the switch
     if (ioctl(fd, I2C_SLAVE, TCA_ADDR) < 0) {
         perror("ioctl to TCA");
         return false;
@@ -95,15 +108,14 @@ bool select_channel(int fd, uint8_t channel) {
         perror("Write channel-select to TCA");
         return false;
     }
-    // Let the switch hardware settle (50 ms)
-    usleep(50 * 1000);
+    // Let the switch hardware settle (100 ms)
+    usleep(100 * 1000);
     return true;
 }
 
 // After selecting a channel, do the D6T "initial setting"
 void initialSetting(int fd, uint8_t ch) {
     if (!select_channel(fd, ch)) return;
-    usleep(50 * 1000);
     if (!point_to_D6T(fd)) return;
 
     uint8_t dat[] = {
@@ -118,13 +130,17 @@ void initialSetting(int fd, uint8_t ch) {
 // Capture, check PEC, and display the thermal image
 void capture_and_display(int fd, uint8_t ch) {
     if (!select_channel(fd, ch)) return;
-    usleep(50 * 1000);
     if (!point_to_D6T(fd)) return;
 
-    // Read N_READ bytes starting from the D6T_CMD register
+    int ret;
     for (int retry = 0; retry < 5; retry++) {
-        if (i2c_read_reg(fd, D6T_CMD, rbuf, N_READ) == 0) break;
+        ret = i2c_read_reg(fd, D6T_CMD, rbuf, N_READ);
+        if (ret == 0) break;
         usleep(60 * 1000);
+    }
+    if (ret < 0) {
+        fprintf(stderr, "Read error on channel %u\n", ch);
+        return;
     }
     if (D6T_checkPEC(rbuf, N_READ - 1)) return;
 
@@ -146,12 +162,28 @@ void capture_and_display(int fd, uint8_t ch) {
     cv::waitKey(1);
 }
 
+// Handle Ctrl-C: reset switch and close bus
+void handle_sigint(int sig) {
+    if (g_fd >= 0) {
+        reset_switch(g_fd);
+        close(g_fd);
+    }
+    printf("\nExiting and reset TCA9548A.\n");
+    exit(0);
+}
+
 int main() {
+    signal(SIGINT, handle_sigint);
+
     int fd = open(I2C_DEV, O_RDWR);
     if (fd < 0) {
         perror("Open I2C device");
         return 1;
     }
+    g_fd = fd;
+
+    // Start from a clean slate: disable all channels
+    reset_switch(fd);
 
     // Run initialSetting on each of the first 4 channels once
     for (uint8_t ch = 0; ch < 4; ch++) {
@@ -167,6 +199,8 @@ int main() {
         }
     }
 
+    // never reached
+    reset_switch(fd);
     close(fd);
     return 0;
 }
