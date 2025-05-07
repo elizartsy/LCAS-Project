@@ -36,6 +36,29 @@ double pix_data[N_PIXEL];
 
 typedef uint8_t u8;
 
+// Recover bus: hardware reset + re-init TCA
+void recover_bus() {
+    fprintf(stderr, "Recovering I2C bus...\n");
+    // Toggle hardware reset
+    gpiod_line_set_value(lineRST, 0);
+    usleep(10000);
+    gpiod_line_set_value(lineRST, 1);
+    usleep(50000);
+    // Re-select sensors
+    for (uint8_t ch = 0; ch < 4; ch++) {
+        if (ioctl(g_fd, I2C_SLAVE, TCA_ADDR) == 0) {
+            u8 zero = 0;
+            write(g_fd, &zero, 1);
+            usleep(50000);
+        }
+        if (ioctl(g_fd, I2C_SLAVE, D6T_ADDR) == 0) {
+            u8 cfg[] = { D6T_SET_ADD, (u8)((D6T_IIR<<4)|(D6T_AVERAGE&0x0F)) };
+            write(g_fd, cfg, sizeof(cfg));
+            usleep(50000);
+        }
+    }
+}
+
 // I2C helpers
 int i2c_write_bytes(int fd, const u8 *data, size_t len) {
     ssize_t w = write(fd, data, len);
@@ -55,25 +78,18 @@ int i2c_read_bytes(int fd, u8 cmd, u8 *buf, size_t len) {
     return 0;
 }
 
-// Reset TCA via GPIO
-void hardware_reset(void) {
-    if (!lineRST) return;
-    gpiod_line_set_value(lineRST, 0);
-    usleep(10000);
-    gpiod_line_set_value(lineRST, 1);
-    usleep(50000);
-}
-
-// Select a TCA channel
-bool select_channel(int ch) {
+// Select TCA channel (with recovery on failure)
+bool select_channel(uint8_t ch) {
     if (ch >= MAX_CHANNELS) return false;
     if (ioctl(g_fd, I2C_SLAVE, TCA_ADDR) < 0) {
         perror("TCA ioctl sel");
+        recover_bus();
         return false;
     }
     u8 cmd = (1u << ch);
     if (i2c_write_bytes(g_fd, &cmd, 1) < 0) {
         fprintf(stderr, "TCA write channel %u failed\n", ch);
+        recover_bus();
         return false;
     }
     usleep(50000);
@@ -81,25 +97,13 @@ bool select_channel(int ch) {
 }
 
 // Point to D6T device
-bool select_sensor(void) {
+bool select_sensor() {
     if (ioctl(g_fd, I2C_SLAVE, D6T_ADDR) < 0) {
         perror("D6T ioctl");
+        recover_bus();
         return false;
     }
     return true;
-}
-
-// Initialize sensor at a given channel
-void initialSetting(uint8_t ch) {
-    if (!select_channel(ch) || !select_sensor()) {
-        fprintf(stderr, "initialSetting: channel %u select failed\n", ch);
-        return;
-    }
-    u8 cfg[] = { D6T_SET_ADD, (u8)((D6T_IIR << 4) | (D6T_AVERAGE & 0x0F)) };
-    if (i2c_write_bytes(g_fd, cfg, sizeof(cfg)) < 0)
-        fprintf(stderr, "initialSetting: write cfg failed on ch %u\n", ch);
-    else
-        usleep(50000);
 }
 
 // Capture one colored frame
@@ -134,10 +138,16 @@ cv::Mat capture_frame(uint8_t ch) {
 
 // Cleanup and exit
 void cleanup_and_exit(int code) {
-    hardware_reset();
+    // Hardware reset
+    if (lineRST) {
+        gpiod_line_set_value(lineRST, 0);
+        usleep(10000);
+        gpiod_line_set_value(lineRST, 1);
+        usleep(50000);
+    }
     if (g_fd >= 0) close(g_fd);
-    if (lineRST) { gpiod_line_release(lineRST); }
-    if (chip)    { gpiod_chip_close(chip); }
+    if (lineRST) gpiod_line_release(lineRST);
+    if (chip)    gpiod_chip_close(chip);
     exit(code);
 }
 
@@ -149,7 +159,7 @@ void handle_sigint(int) {
 int main() {
     signal(SIGINT, handle_sigint);
 
-    // Prevent QStandardPaths warning
+    // Prevent Qt warning
     setenv("XDG_RUNTIME_DIR", "/tmp/runtime-root", 1);
 
     // GPIO setup
@@ -157,16 +167,39 @@ int main() {
     if (!chip) { perror("gpiochip open"); return 1; }
     lineRST = gpiod_chip_get_line(chip, RST_GPIO_PIN);
     if (!lineRST || gpiod_line_request_output(lineRST, "tca_rst", 1) < 0) {
-        perror("line request"); cleanup_and_exit(1);
+        perror("line request"); return 1;
     }
-    hardware_reset();
+    // Initial hardware reset
+    gpiod_line_set_value(lineRST, 0);
+    usleep(10000);
+    gpiod_line_set_value(lineRST, 1);
+    usleep(50000);
 
     // I2C open
     g_fd = open(I2C_DEV, O_RDWR);
     if (g_fd < 0) { perror("open i2c"); cleanup_and_exit(1); }
 
-    // Init each sensor once
-    for (uint8_t ch = 0; ch < 4; ch++) initialSetting(ch);
+    // Initial TCA reset
+    if (ioctl(g_fd, I2C_SLAVE, TCA_ADDR) == 0) {
+        u8 zero = 0;
+        write(g_fd, &zero, 1);
+        usleep(50000);
+    }
+
+    // Initial sensor init
+    for (uint8_t ch = 0; ch < 4; ch++) {
+        // write config
+        if (ioctl(g_fd, I2C_SLAVE, TCA_ADDR) == 0) {
+            u8 cmd = (1u << ch);
+            write(g_fd, &cmd, 1);
+            usleep(50000);
+        }
+        if (ioctl(g_fd, I2C_SLAVE, D6T_ADDR) == 0) {
+            u8 cfg[] = { D6T_SET_ADD, (u8)((D6T_IIR<<4)|(D6T_AVERAGE&0x0F)) };
+            write(g_fd, cfg, sizeof(cfg));
+            usleep(50000);
+        }
+    }
 
     // Prep windows
     for (uint8_t ch = 0; ch < 4; ch++) {
@@ -186,4 +219,3 @@ int main() {
     cleanup_and_exit(0);
     return 0;
 }
-
