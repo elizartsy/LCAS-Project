@@ -8,11 +8,12 @@
 #include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
 #include <signal.h>
+#include <stdlib.h>
 #include <time.h>
 #include <gpiod.h>
 
 #define D6T_ADDR      0x0A      // Melexis D6T fixed address
-#define D6T_CMD       0x4D       // Temperature read command
+#define D6T_CMD       0x4D      // Temperature read command
 #define D6T_SET_ADD   0x01
 #define D6T_IIR       0x00
 #define D6T_AVERAGE   0x04
@@ -63,18 +64,6 @@ void hardware_reset(void) {
     usleep(50000);
 }
 
-// Disable all TCA channels
-void reset_tca(void) {
-    if (ioctl(g_fd, I2C_SLAVE, TCA_ADDR) < 0) {
-        perror("TCA ioctl reset");
-        return;
-    }
-    u8 zero = 0;
-    if (i2c_write_bytes(g_fd, &zero, 1) < 0)
-        fprintf(stderr, "Failed to disable TCA channels\n");
-    usleep(50000);
-}
-
 // Select a TCA channel
 bool select_channel(int ch) {
     if (ch >= MAX_CHANNELS) return false;
@@ -102,7 +91,6 @@ bool select_sensor(void) {
 
 // Initialize sensor at a given channel
 void initialSetting(uint8_t ch) {
-    reset_tca();
     if (!select_channel(ch) || !select_sensor()) {
         fprintf(stderr, "initialSetting: channel %u select failed\n", ch);
         return;
@@ -117,24 +105,25 @@ void initialSetting(uint8_t ch) {
 // Capture one colored frame
 cv::Mat capture_frame(uint8_t ch) {
     cv::Mat mat;
-    reset_tca();
     if (!select_channel(ch) || !select_sensor()) return mat;
 
-    int ret;
+    int ret = -1;
     for (int i = 0; i < 5; i++) {
         ret = i2c_read_bytes(g_fd, D6T_CMD, rbuf, N_READ);
         if (ret == 0) break;
         usleep(60000);
     }
-    if (ret < 0) return mat;
+    if (ret < 0) {
+        fprintf(stderr, "capture_frame: read failed on ch %u\n", ch);
+        return mat;
+    }
 
-    // parse temperature
+    // parse temperature pixels
     for (int i = 0; i < N_PIXEL; i++) {
         int16_t v = (int16_t)(rbuf[2+2*i] | (rbuf[3+2*i] << 8));
         pix_data[i] = v / 10.0;
     }
 
-    // normalize and color-map
     cv::Mat src(N_ROW, N_ROW, CV_64F, pix_data);
     cv::Mat norm, color;
     cv::normalize(src, norm, 0, 255, cv::NORM_MINMAX);
@@ -160,6 +149,9 @@ void handle_sigint(int) {
 int main() {
     signal(SIGINT, handle_sigint);
 
+    // Prevent QStandardPaths warning
+    setenv("XDG_RUNTIME_DIR", "/tmp/runtime-root", 1);
+
     // GPIO setup
     chip = gpiod_chip_open_by_name("gpiochip0");
     if (!chip) { perror("gpiochip open"); return 1; }
@@ -173,20 +165,19 @@ int main() {
     g_fd = open(I2C_DEV, O_RDWR);
     if (g_fd < 0) { perror("open i2c"); cleanup_and_exit(1); }
 
-    // Init each sensor
-    for (uint8_t ch=0; ch<4; ch++) initialSetting(ch);
+    // Init each sensor once
+    for (uint8_t ch = 0; ch < 4; ch++) initialSetting(ch);
 
     // Prep windows
-    for (uint8_t ch=0; ch<4; ch++) {
+    for (uint8_t ch = 0; ch < 4; ch++) {
         cv::namedWindow("Thermal " + std::to_string(ch+1), cv::WINDOW_AUTOSIZE);
     }
 
     // Live loop
     while (true) {
-        for (uint8_t ch=0; ch<4; ch++) {
+        for (uint8_t ch = 0; ch < 4; ch++) {
             cv::Mat frame = capture_frame(ch);
-            if (!frame.empty())
-                cv::imshow("Thermal " + std::to_string(ch+1), frame);
+            if (!frame.empty()) cv::imshow("Thermal " + std::to_string(ch+1), frame);
         }
         int key = cv::waitKey(30);
         if (key == 27) break;  // ESC
@@ -195,3 +186,4 @@ int main() {
     cleanup_and_exit(0);
     return 0;
 }
+
