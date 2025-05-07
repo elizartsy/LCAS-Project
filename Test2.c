@@ -12,12 +12,12 @@
 #include <gpiod.h>
 
 #define D6T_ADDR      0x0A      // Melexis D6T fixed address
-#define D6T_CMD       0x4D
+#define D6T_CMD       0x4D       // Temperature read command
 #define D6T_SET_ADD   0x01
 #define D6T_IIR       0x00
 #define D6T_AVERAGE   0x04
 
-#define TCA_ADDR      0x70      // TCA9548A address (A0–A2 tied to GND)
+#define TCA_ADDR      0x70      // TCA9548A address
 #define MAX_CHANNELS  8
 
 #define N_ROW         32
@@ -25,178 +25,171 @@
 #define N_READ        ((N_PIXEL + 1) * 2 + 1)
 
 #define I2C_DEV       "/dev/i2c-1"
-#define RST_GPIO_PIN  23        // Pi GPIO pin connected to TCA RESET (BCM numbering)
+#define RST_GPIO_PIN  23        // BCM pin for TCA reset
 
-static int               g_fd = -1;
+static int g_fd = -1;
 static struct gpiod_chip *chip = NULL;
 static struct gpiod_line *lineRST = NULL;
-uint8_t      rbuf[N_READ];
-double       ptat;
-double       pix_data[N_PIXEL];
+uint8_t rbuf[N_READ];
+double pix_data[N_PIXEL];
 
-// Low-level I2C write
-int i2c_write(int fd, const uint8_t *data, size_t len) {
-    return write(fd, data, len) == (ssize_t)len ? 0 : -1;
+typedef uint8_t u8;
+
+// I2C helpers
+int i2c_write_bytes(int fd, const u8 *data, size_t len) {
+    ssize_t w = write(fd, data, len);
+    if (w < 0) perror("i2c write");
+    return (w == (ssize_t)len) ? 0 : -1;
 }
-// Low-level I2C read
-int i2c_read_reg(int fd, uint8_t reg, uint8_t *buf, size_t len) {
-    if (write(fd, &reg, 1) != 1) return -1;
-    if (read(fd, buf, len) != (ssize_t)len) return -1;
+int i2c_read_bytes(int fd, u8 cmd, u8 *buf, size_t len) {
+    if (write(fd, &cmd, 1) != 1) {
+        perror("i2c write cmd");
+        return -1;
+    }
+    ssize_t r = read(fd, buf, len);
+    if (r != (ssize_t)len) {
+        perror("i2c read data");
+        return -1;
+    }
     return 0;
 }
-// CRC-8 PEC
-uint8_t calc_crc(uint8_t data) {
-    for (int i = 0; i < 8; i++) {
-        uint8_t temp = data;
-        data <<= 1;
-        if (temp & 0x80) data ^= 0x07;
-    }
-    return data;
-}
-bool D6T_checkPEC(const uint8_t buf[], int n) {
-    uint8_t crc = calc_crc((D6T_ADDR << 1) | 1);
-    for (int i = 0; i < n; i++) crc = calc_crc(buf[i] ^ crc);
-    if (crc != buf[n]) {
-        fprintf(stderr, "PEC failed: calc=0x%02X got=0x%02X\n", crc, buf[n]);
-        return true;
-    }
-    return false;
-}
-int16_t conv16_le(const uint8_t* buf, int n) {
-    return (int16_t)(buf[n] | (buf[n+1] << 8));
-}
 
-// Drive RESET pin low then high via GPIO
+// Reset TCA via GPIO
 void hardware_reset(void) {
     if (!lineRST) return;
     gpiod_line_set_value(lineRST, 0);
-    usleep(10 * 1000);
+    usleep(10000);
     gpiod_line_set_value(lineRST, 1);
-    usleep(50 * 1000);
+    usleep(50000);
 }
 
-// Disable all TCA channels via I2C
-void reset_switch(int fd) {
-    if (ioctl(fd, I2C_SLAVE, TCA_ADDR) < 0) return;
-    uint8_t zero = 0;
-    i2c_write(fd, &zero, 1);
-    usleep(50 * 1000);
+// Disable all TCA channels
+void reset_tca(void) {
+    if (ioctl(g_fd, I2C_SLAVE, TCA_ADDR) < 0) {
+        perror("TCA ioctl reset");
+        return;
+    }
+    u8 zero = 0;
+    if (i2c_write_bytes(g_fd, &zero, 1) < 0)
+        fprintf(stderr, "Failed to disable TCA channels\n");
+    usleep(50000);
 }
 
-// Select a single channel on the TCA
-bool select_channel(int fd, uint8_t ch) {
+// Select a TCA channel
+bool select_channel(int ch) {
     if (ch >= MAX_CHANNELS) return false;
-    if (ioctl(fd, I2C_SLAVE, TCA_ADDR) < 0) return false;
-    uint8_t cmd = 1u << ch;
-    if (i2c_write(fd, &cmd, 1) < 0) return false;
-    usleep(50 * 1000);
+    if (ioctl(g_fd, I2C_SLAVE, TCA_ADDR) < 0) {
+        perror("TCA ioctl sel");
+        return false;
+    }
+    u8 cmd = (1u << ch);
+    if (i2c_write_bytes(g_fd, &cmd, 1) < 0) {
+        fprintf(stderr, "TCA write channel %u failed\n", ch);
+        return false;
+    }
+    usleep(50000);
     return true;
 }
-// Re-point bus to D6T sensor
-bool point_to_D6T(int fd) {
-    return ioctl(fd, I2C_SLAVE, D6T_ADDR) == 0;
-}
 
-void initialSetting(int fd, uint8_t ch) {
-    if (!select_channel(fd, ch) || !point_to_D6T(fd)) return;
-    uint8_t dat[] = { D6T_SET_ADD, uint8_t((D6T_IIR<<4)|(D6T_AVERAGE & 0x0F)) };
-    if (i2c_write(fd, dat, sizeof(dat)) < 0)
-        perror("initialSetting");
-}
-
-// Capture data and return a colored Mat for display
-cv::Mat capture_frame(int fd, uint8_t ch) {
-    cv::Mat empty;
-    if (!select_channel(fd, ch) || !point_to_D6T(fd)) return empty;
-    int ret = -1;
-    for (int i = 0; i < 5; i++) {
-        ret = i2c_read_reg(fd, D6T_CMD, rbuf, N_READ);
-        if (ret == 0) break;
-        usleep(60 * 1000);
+// Point to D6T device
+bool select_sensor(void) {
+    if (ioctl(g_fd, I2C_SLAVE, D6T_ADDR) < 0) {
+        perror("D6T ioctl");
+        return false;
     }
-    if (ret < 0 || D6T_checkPEC(rbuf, N_READ-1)) return empty;
-    ptat = conv16_le(rbuf, 0) / 10.0;
-    for (int i = 0; i < N_PIXEL; i++)
-        pix_data[i] = conv16_le(rbuf, 2 + 2*i) / 10.0;
-
-    cv::Mat m(N_ROW, N_ROW, CV_64F, pix_data), norm, col;
-    cv::normalize(m, norm, 0, 255, cv::NORM_MINMAX);
-    norm.convertTo(norm, CV_8U);
-    cv::applyColorMap(norm, col, cv::COLORMAP_JET);
-    return col;
+    return true;
 }
 
-// Cleanup on exit: hardware reset, close I2C and GPIO
+// Initialize sensor at a given channel
+void initialSetting(uint8_t ch) {
+    reset_tca();
+    if (!select_channel(ch) || !select_sensor()) {
+        fprintf(stderr, "initialSetting: channel %u select failed\n", ch);
+        return;
+    }
+    u8 cfg[] = { D6T_SET_ADD, (u8)((D6T_IIR << 4) | (D6T_AVERAGE & 0x0F)) };
+    if (i2c_write_bytes(g_fd, cfg, sizeof(cfg)) < 0)
+        fprintf(stderr, "initialSetting: write cfg failed on ch %u\n", ch);
+    else
+        usleep(50000);
+}
+
+// Capture one colored frame
+cv::Mat capture_frame(uint8_t ch) {
+    cv::Mat mat;
+    reset_tca();
+    if (!select_channel(ch) || !select_sensor()) return mat;
+
+    int ret;
+    for (int i = 0; i < 5; i++) {
+        ret = i2c_read_bytes(g_fd, D6T_CMD, rbuf, N_READ);
+        if (ret == 0) break;
+        usleep(60000);
+    }
+    if (ret < 0) return mat;
+
+    // parse temperature
+    for (int i = 0; i < N_PIXEL; i++) {
+        int16_t v = (int16_t)(rbuf[2+2*i] | (rbuf[3+2*i] << 8));
+        pix_data[i] = v / 10.0;
+    }
+
+    // normalize and color-map
+    cv::Mat src(N_ROW, N_ROW, CV_64F, pix_data);
+    cv::Mat norm, color;
+    cv::normalize(src, norm, 0, 255, cv::NORM_MINMAX);
+    norm.convertTo(norm, CV_8U);
+    cv::applyColorMap(norm, color, cv::COLORMAP_JET);
+    return color;
+}
+
+// Cleanup and exit
 void cleanup_and_exit(int code) {
     hardware_reset();
     if (g_fd >= 0) close(g_fd);
-    if (lineRST) {
-        gpiod_line_release(lineRST);
-        lineRST = NULL;
-    }
-    if (chip) {
-        gpiod_chip_close(chip);
-        chip = NULL;
-    }
+    if (lineRST) { gpiod_line_release(lineRST); }
+    if (chip)    { gpiod_chip_close(chip); }
     exit(code);
 }
 
-void handle_sigint(int sig) {
-    (void)sig;
-    printf("\nSIGINT received, cleaning up...\n");
+void handle_sigint(int) {
+    printf("\nSIGINT, cleaning up...\n");
     cleanup_and_exit(0);
 }
 
 int main() {
     signal(SIGINT, handle_sigint);
 
-    // Initialize GPIO for reset
+    // GPIO setup
     chip = gpiod_chip_open_by_name("gpiochip0");
-    if (!chip) {
-        perror("gpiod_chip_open_by_name");
-        return 1;
-    }
+    if (!chip) { perror("gpiochip open"); return 1; }
     lineRST = gpiod_chip_get_line(chip, RST_GPIO_PIN);
     if (!lineRST || gpiod_line_request_output(lineRST, "tca_rst", 1) < 0) {
-        perror("gpiod_line_request_output");
-        cleanup_and_exit(1);
+        perror("line request"); cleanup_and_exit(1);
     }
-
-    // Hardware reset at startup
     hardware_reset();
 
-    // Open I2C bus
-    int fd = open(I2C_DEV, O_RDWR);
-    if (fd < 0) {
-        perror("open i2c");
-        cleanup_and_exit(1);
-    }
-    g_fd = fd;
+    // I2C open
+    g_fd = open(I2C_DEV, O_RDWR);
+    if (g_fd < 0) { perror("open i2c"); cleanup_and_exit(1); }
 
-    // Software reset of all channels
-    reset_switch(fd);
+    // Init each sensor
+    for (uint8_t ch=0; ch<4; ch++) initialSetting(ch);
 
-    // Initial setting for first 4 sensors
-    for (uint8_t ch = 0; ch < 4; ch++)
-        initialSetting(fd, ch);
-
-    // Create display windows
-    for (uint8_t ch = 0; ch < 4; ch++) {
-        std::string win = "Thermal " + std::to_string(ch+1);
-        cv::namedWindow(win, cv::WINDOW_AUTOSIZE);
+    // Prep windows
+    for (uint8_t ch=0; ch<4; ch++) {
+        cv::namedWindow("Thermal " + std::to_string(ch+1), cv::WINDOW_AUTOSIZE);
     }
 
-    // Main live loop
+    // Live loop
     while (true) {
-        for (uint8_t ch = 0; ch < 4; ch++) {
-            cv::Mat frame = capture_frame(fd, ch);
-            if (!frame.empty()) {
-                std::string win = "Thermal " + std::to_string(ch+1);
-                cv::imshow(win, frame);
-            }
+        for (uint8_t ch=0; ch<4; ch++) {
+            cv::Mat frame = capture_frame(ch);
+            if (!frame.empty())
+                cv::imshow("Thermal " + std::to_string(ch+1), frame);
         }
-        // Exit on ESC key
-        if (cv::waitKey(30) == 27) break;
+        int key = cv::waitKey(30);
+        if (key == 27) break;  // ESC
     }
 
     cleanup_and_exit(0);
