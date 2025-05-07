@@ -25,26 +25,26 @@
 #define N_READ        ((N_PIXEL + 1) * 2 + 1)
 
 #define I2C_DEV       "/dev/i2c-1"
-#define RST_GPIO_PIN  23        // Pi GPIO pin connected to TCA RESET
+#define RST_GPIO_PIN  23        // Pi GPIO pin connected to TCA RESET (BCM numbering)
 
-static int   g_fd = -1;
-static struct gpiod_chip *chip;
-static struct gpiod_line *lineRST;
+static int               g_fd = -1;
+static struct gpiod_chip *chip = NULL;
+static struct gpiod_line *lineRST = NULL;
 uint8_t      rbuf[N_READ];
 double       ptat;
 double       pix_data[N_PIXEL];
 
-// I2C write
+// Low-level I2C write
 int i2c_write(int fd, const uint8_t *data, size_t len) {
     return write(fd, data, len) == (ssize_t)len ? 0 : -1;
 }
-// I2C read via reg write-then-read
+// Low-level I2C read
 int i2c_read_reg(int fd, uint8_t reg, uint8_t *buf, size_t len) {
     if (write(fd, &reg, 1) != 1) return -1;
     if (read(fd, buf, len) != (ssize_t)len) return -1;
     return 0;
 }
-// CRC-8
+// CRC-8 PEC
 uint8_t calc_crc(uint8_t data) {
     for (int i = 0; i < 8; i++) {
         uint8_t temp = data;
@@ -66,33 +66,33 @@ int16_t conv16_le(const uint8_t* buf, int n) {
     return (int16_t)(buf[n] | (buf[n+1] << 8));
 }
 
-// Hardware reset: drive RESET line low then high
+// Drive RESET pin low then high via GPIO
 void hardware_reset(void) {
-    // assume lineRST requested as output
+    if (!lineRST) return;
     gpiod_line_set_value(lineRST, 0);
     usleep(10 * 1000);
     gpiod_line_set_value(lineRST, 1);
     usleep(50 * 1000);
 }
 
-// Reset all TCA channels by software mask
+// Disable all TCA channels via I2C
 void reset_switch(int fd) {
-    ioctl(fd, I2C_SLAVE, TCA_ADDR);
+    if (ioctl(fd, I2C_SLAVE, TCA_ADDR) < 0) return;
     uint8_t zero = 0;
     i2c_write(fd, &zero, 1);
     usleep(50 * 1000);
 }
 
-// Select TCA channel
+// Select a single channel on the TCA
 bool select_channel(int fd, uint8_t ch) {
     if (ch >= MAX_CHANNELS) return false;
-    ioctl(fd, I2C_SLAVE, TCA_ADDR);
+    if (ioctl(fd, I2C_SLAVE, TCA_ADDR) < 0) return false;
     uint8_t cmd = 1u << ch;
     if (i2c_write(fd, &cmd, 1) < 0) return false;
     usleep(50 * 1000);
     return true;
 }
-// Set bus to D6T
+// Re-point bus to D6T sensor
 bool point_to_D6T(int fd) {
     return ioctl(fd, I2C_SLAVE, D6T_ADDR) == 0;
 }
@@ -100,56 +100,98 @@ bool point_to_D6T(int fd) {
 void initialSetting(int fd, uint8_t ch) {
     if (!select_channel(fd, ch) || !point_to_D6T(fd)) return;
     uint8_t dat[] = { D6T_SET_ADD, uint8_t((D6T_IIR<<4)|(D6T_AVERAGE & 0x0F)) };
-    if (i2c_write(fd, dat, sizeof(dat))<0)
+    if (i2c_write(fd, dat, sizeof(dat)) < 0)
         perror("initialSetting");
 }
 
 void capture_and_display(int fd, uint8_t ch) {
-    if (!select_channel(fd,ch) || !point_to_D6T(fd)) return;
-    int ret;
-    for (int i=0;i<5;i++){
+    if (!select_channel(fd, ch) || !point_to_D6T(fd)) return;
+    int ret = -1;
+    for (int i = 0; i < 5; i++) {
         ret = i2c_read_reg(fd, D6T_CMD, rbuf, N_READ);
-        if (ret==0) break;
-        usleep(60*1000);
+        if (ret == 0) break;
+        usleep(60 * 1000);
     }
-    if (ret<0 || D6T_checkPEC(rbuf,N_READ-1)) return;
-    ptat = conv16_le(rbuf,0)/10.0;
-    for(int i=0;i<N_PIXEL;i++) pix_data[i] = conv16_le(rbuf,2+2*i)/10.0;
-    cv::Mat m(N_ROW,N_ROW,CV_64F,pix_data), n,c;
-    cv::normalize(m,n,0,255,cv::NORM_MINMAX);
-    n.convertTo(n,CV_8U);
-    cv::applyColorMap(n,c,cv::COLORMAP_JET);
-    char win[32]; snprintf(win,32,"Thermal %u",ch+1);
-    cv::imshow(win,c); cv::waitKey(1);
+    if (ret < 0 || D6T_checkPEC(rbuf, N_READ-1)) return;
+    ptat = conv16_le(rbuf, 0) / 10.0;
+    for (int i = 0; i < N_PIXEL; i++)
+        pix_data[i] = conv16_le(rbuf, 2 + 2*i) / 10.0;
+
+    cv::Mat m(N_ROW, N_ROW, CV_64F, pix_data), n, c;
+    cv::normalize(m, n, 0, 255, cv::NORM_MINMAX);
+    n.convertTo(n, CV_8U);
+    cv::applyColorMap(n, c, cv::COLORMAP_JET);
+
+    char win[32];
+    snprintf(win, sizeof(win), "Thermal %u", ch+1);
+    cv::imshow(win, c);
+    cv::waitKey(1);
+}
+
+// Cleanup on exit: hardware reset, close I2C and GPIO
+void cleanup_and_exit(int code) {
+    hardware_reset();
+    if (g_fd >= 0) close(g_fd);
+    if (lineRST) {
+        gpiod_line_release(lineRST);
+        lineRST = NULL;
+    }
+    if (chip) {
+        gpiod_chip_close(chip);
+        chip = NULL;
+    }
+    exit(code);
 }
 
 void handle_sigint(int sig) {
-    // clean up
-    hardware_reset();
-    if (g_fd>=0) close(g_fd);
-    printf("\nExiting and reset via hardware.\n");
-    exit(0);
+    (void)sig;
+    printf("\nSIGINT received, cleaning up...\n");
+    cleanup_and_exit(0);
 }
 
-int main(){
-    signal(SIGINT,handle_sigint);
-    // init GPIO for reset
+int main() {
+    signal(SIGINT, handle_sigint);
+
+    // Initialize GPIO for reset
     chip = gpiod_chip_open_by_name("gpiochip0");
+    if (!chip) {
+        perror("gpiod_chip_open_by_name");
+        return 1;
+    }
     lineRST = gpiod_chip_get_line(chip, RST_GPIO_PIN);
-    gpiod_line_request_output(lineRST, "tca_rst", 1);
+    if (!lineRST || gpiod_line_request_output(lineRST, "tca_rst", 1) < 0) {
+        perror("gpiod_line_request_output");
+        cleanup_and_exit(1);
+    }
+
+    // Hardware reset at startup
     hardware_reset();
-    // open I2C
-    int fd = open(I2C_DEV,O_RDWR);
-    if(fd<0){ perror("open i2c"); return 1; }
+
+    // Open I2C bus
+    int fd = open(I2C_DEV, O_RDWR);
+    if (fd < 0) {
+        perror("open i2c");
+        cleanup_and_exit(1);
+    }
     g_fd = fd;
+
+    // Software reset of all channels
     reset_switch(fd);
-    for(uint8_t ch=0;ch<4;ch++) initialSetting(fd,ch);
-    while(1){
-        for(uint8_t ch=0;ch<4;ch++){
-            capture_and_display(fd,ch);
-            printf("Channel %u. ENTER to cont...\n",ch+1);
+
+    // Initial setting for first 4 sensors
+    for (uint8_t ch = 0; ch < 4; ch++)
+        initialSetting(fd, ch);
+
+    // Main loop
+    while (true) {
+        for (uint8_t ch = 0; ch < 4; ch++) {
+            capture_and_display(fd, ch);
+            printf("Channel %u. Press ENTER to continue...\n", ch+1);
             getchar();
         }
     }
+
+    // never reached
+    cleanup_and_exit(0);
     return 0;
 }
