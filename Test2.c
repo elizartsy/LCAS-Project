@@ -1,221 +1,131 @@
 #include <opencv2/opencv.hpp>
-#include <stdio.h>
-#include <stdint.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <string.h>
-#include <errno.h>
+#include <signal.h>
 #include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <time.h>
 #include <gpiod.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
-#define D6T_ADDR      0x0A      // Melexis D6T fixed address
-#define D6T_CMD       0x4D      // Temperature read command
+#define I2C_DEV       "/dev/i2c-1"
+#define TCA_ADDR      0x70      // TCA9548A
+#define D6T_ADDR      0x0A      // Melexis D6T
+#define D6T_CMD       0x4D      // Read command
 #define D6T_SET_ADD   0x01
 #define D6T_IIR       0x00
 #define D6T_AVERAGE   0x04
 
-#define TCA_ADDR      0x70      // TCA9548A address
-#define MAX_CHANNELS  8
-
+#define RST_PIN       23        // BCM
 #define N_ROW         32
 #define N_PIXEL       (N_ROW * N_ROW)
 #define N_READ        ((N_PIXEL + 1) * 2 + 1)
 
-#define I2C_DEV       "/dev/i2c-1"
-#define RST_GPIO_PIN  23        // BCM pin for TCA reset
-
-static int g_fd = -1;
+static int i2c_fd = -1;
 static struct gpiod_chip *chip = NULL;
-static struct gpiod_line *lineRST = NULL;
-uint8_t rbuf[N_READ];
-double pix_data[N_PIXEL];
+static struct gpiod_line *line = NULL;
+static uint8_t rbuf[N_READ];
+static double pix[N_PIXEL];
 
 typedef uint8_t u8;
 
-// Recover bus: hardware reset + re-init TCA
-void recover_bus() {
-    fprintf(stderr, "Recovering I2C bus...\n");
-    // Toggle hardware reset
-    gpiod_line_set_value(lineRST, 0);
-    usleep(10000);
-    gpiod_line_set_value(lineRST, 1);
+// Disable all TCA channels
+void disable_all_channels() {
+    ioctl(i2c_fd, I2C_SLAVE, TCA_ADDR);
+    u8 zero = 0;
+    write(i2c_fd, &zero, 1);
     usleep(50000);
-    // Re-select sensors
-    for (uint8_t ch = 0; ch < 4; ch++) {
-        if (ioctl(g_fd, I2C_SLAVE, TCA_ADDR) == 0) {
-            u8 zero = 0;
-            write(g_fd, &zero, 1);
-            usleep(50000);
-        }
-        if (ioctl(g_fd, I2C_SLAVE, D6T_ADDR) == 0) {
-            u8 cfg[] = { D6T_SET_ADD, (u8)((D6T_IIR<<4)|(D6T_AVERAGE&0x0F)) };
-            write(g_fd, cfg, sizeof(cfg));
-            usleep(50000);
-        }
-    }
 }
 
-// I2C helpers
-int i2c_write_bytes(int fd, const u8 *data, size_t len) {
-    ssize_t w = write(fd, data, len);
-    if (w < 0) perror("i2c write");
-    return (w == (ssize_t)len) ? 0 : -1;
-}
-int i2c_read_bytes(int fd, u8 cmd, u8 *buf, size_t len) {
-    if (write(fd, &cmd, 1) != 1) {
-        perror("i2c write cmd");
-        return -1;
-    }
-    ssize_t r = read(fd, buf, len);
-    if (r != (ssize_t)len) {
-        perror("i2c read data");
-        return -1;
-    }
-    return 0;
-}
-
-// Select TCA channel (with recovery on failure)
-bool select_channel(uint8_t ch) {
-    if (ch >= MAX_CHANNELS) return false;
-    if (ioctl(g_fd, I2C_SLAVE, TCA_ADDR) < 0) {
-        perror("TCA ioctl sel");
-        recover_bus();
-        return false;
-    }
-    u8 cmd = (1u << ch);
-    if (i2c_write_bytes(g_fd, &cmd, 1) < 0) {
-        fprintf(stderr, "TCA write channel %u failed\n", ch);
-        recover_bus();
-        return false;
-    }
+// Select TCA channel (only this channel will be active)
+bool select_channel(u8 ch) {
+    disable_all_channels();  // ensure other channels off
+    if (ioctl(i2c_fd, I2C_SLAVE, TCA_ADDR) < 0) return false;
+    u8 cmd = (1 << ch);
+    if (write(i2c_fd, &cmd, 1) != 1) return false;
     usleep(50000);
     return true;
 }
 
-// Point to D6T device
+// Select D6T sensor
 bool select_sensor() {
-    if (ioctl(g_fd, I2C_SLAVE, D6T_ADDR) < 0) {
-        perror("D6T ioctl");
-        recover_bus();
-        return false;
-    }
-    return true;
+    return ioctl(i2c_fd, I2C_SLAVE, D6T_ADDR) == 0;
 }
 
-// Capture one colored frame
-cv::Mat capture_frame(uint8_t ch) {
-    cv::Mat mat;
-    if (!select_channel(ch) || !select_sensor()) return mat;
-
-    int ret = -1;
-    for (int i = 0; i < 5; i++) {
-        ret = i2c_read_bytes(g_fd, D6T_CMD, rbuf, N_READ);
-        if (ret == 0) break;
-        usleep(60000);
-    }
-    if (ret < 0) {
-        fprintf(stderr, "capture_frame: read failed on ch %u\n", ch);
-        return mat;
-    }
-
-    // parse temperature pixels
-    for (int i = 0; i < N_PIXEL; i++) {
-        int16_t v = (int16_t)(rbuf[2+2*i] | (rbuf[3+2*i] << 8));
-        pix_data[i] = v / 10.0;
-    }
-
-    cv::Mat src(N_ROW, N_ROW, CV_64F, pix_data);
-    cv::Mat norm, color;
-    cv::normalize(src, norm, 0, 255, cv::NORM_MINMAX);
-    norm.convertTo(norm, CV_8U);
-    cv::applyColorMap(norm, color, cv::COLORMAP_JET);
-    return color;
+// Initialize one sensor channel
+void init_channel(u8 ch) {
+    if (!select_channel(ch) || !select_sensor()) return;
+    u8 cfg[2] = { D6T_SET_ADD, (u8)((D6T_IIR<<4)|(D6T_AVERAGE&0x0F)) };
+    write(i2c_fd, cfg, 2);
+    usleep(50000);
 }
 
-// Cleanup and exit
-void cleanup_and_exit(int code) {
-    // Hardware reset
-    if (lineRST) {
-        gpiod_line_set_value(lineRST, 0);
-        usleep(10000);
-        gpiod_line_set_value(lineRST, 1);
-        usleep(50000);
+// Read frame from a single channel
+cv::Mat read_frame(u8 ch) {
+    if (!select_channel(ch) || !select_sensor()) return cv::Mat();
+    u8 cmd = D6T_CMD;
+    if (write(i2c_fd, &cmd, 1) != 1) return cv::Mat();
+
+    if (read(i2c_fd, rbuf, N_READ) != N_READ) return cv::Mat();
+    for (int i = 0; i < N_PIXEL; ++i) {
+        int16_t v = (int16_t)(rbuf[2+2*i] | (rbuf[3+2*i]<<8));
+        pix[i] = v / 10.0;
     }
-    if (g_fd >= 0) close(g_fd);
-    if (lineRST) gpiod_line_release(lineRST);
-    if (chip)    gpiod_chip_close(chip);
+    cv::Mat m(N_ROW, N_ROW, CV_64F, pix), n, c;
+    cv::normalize(m, n, 0, 255, cv::NORM_MINMAX);
+    n.convertTo(n, CV_8U);
+    cv::applyColorMap(n, c, cv::COLORMAP_JET);
+    return c;
+}
+
+void cleanup(int code) {
+    if (i2c_fd >= 0) close(i2c_fd);
+    if (line) gpiod_line_release(line);
+    if (chip) gpiod_chip_close(chip);
     exit(code);
 }
 
-void handle_sigint(int) {
-    printf("\nSIGINT, cleaning up...\n");
-    cleanup_and_exit(0);
-}
+void sigint(int) { cleanup(0); }
 
 int main() {
-    signal(SIGINT, handle_sigint);
+    signal(SIGINT, sigint);
 
-    // Prevent Qt warning
-    setenv("XDG_RUNTIME_DIR", "/tmp/runtime-root", 1);
-
-    // GPIO setup
+    // GPIO reset line
     chip = gpiod_chip_open_by_name("gpiochip0");
-    if (!chip) { perror("gpiochip open"); return 1; }
-    lineRST = gpiod_chip_get_line(chip, RST_GPIO_PIN);
-    if (!lineRST || gpiod_line_request_output(lineRST, "tca_rst", 1) < 0) {
-        perror("line request"); return 1;
-    }
-    // Initial hardware reset
-    gpiod_line_set_value(lineRST, 0);
-    usleep(10000);
-    gpiod_line_set_value(lineRST, 1);
-    usleep(50000);
+    if (!chip) { perror("chip"); return 1; }
+    line = gpiod_chip_get_line(chip, RST_PIN);
+    if (!line || gpiod_line_request_output(line, "rst", 1) < 0) { perror("line"); return 1; }
+    // Hardware reset
+    gpiod_line_set_value(line, 0); usleep(10000);
+    gpiod_line_set_value(line, 1); usleep(50000);
 
-    // I2C open
-    g_fd = open(I2C_DEV, O_RDWR);
-    if (g_fd < 0) { perror("open i2c"); cleanup_and_exit(1); }
+    // Open I2C
+    i2c_fd = open(I2C_DEV, O_RDWR);
+    if (i2c_fd < 0) { perror("i2c open"); cleanup(1); }
 
-    // Initial TCA reset
-    if (ioctl(g_fd, I2C_SLAVE, TCA_ADDR) == 0) {
-        u8 zero = 0;
-        write(g_fd, &zero, 1);
-        usleep(50000);
+    // Initialize each channel
+    for (u8 ch = 0; ch < 4; ++ch) {
+        init_channel(ch);
     }
 
-    // Initial sensor init
-    for (uint8_t ch = 0; ch < 4; ch++) {
-        // write config
-        if (ioctl(g_fd, I2C_SLAVE, TCA_ADDR) == 0) {
-            u8 cmd = (1u << ch);
-            write(g_fd, &cmd, 1);
-            usleep(50000);
-        }
-        if (ioctl(g_fd, I2C_SLAVE, D6T_ADDR) == 0) {
-            u8 cfg[] = { D6T_SET_ADD, (u8)((D6T_IIR<<4)|(D6T_AVERAGE&0x0F)) };
-            write(g_fd, cfg, sizeof(cfg));
-            usleep(50000);
-        }
-    }
-
-    // Prep windows
-    for (uint8_t ch = 0; ch < 4; ch++) {
+    // Create windows
+    for (int ch = 0; ch < 4; ++ch) {
         cv::namedWindow("Thermal " + std::to_string(ch+1), cv::WINDOW_AUTOSIZE);
     }
 
     // Live loop
     while (true) {
-        for (uint8_t ch = 0; ch < 4; ch++) {
-            cv::Mat frame = capture_frame(ch);
-            if (!frame.empty()) cv::imshow("Thermal " + std::to_string(ch+1), frame);
+        for (u8 ch = 0; ch < 4; ++ch) {
+            cv::Mat frame = read_frame(ch);
+            if (!frame.empty()) {
+                cv::imshow("Thermal " + std::to_string(ch+1), frame);
+            }
         }
-        int key = cv::waitKey(30);
-        if (key == 27) break;  // ESC
+        if (cv::waitKey(100) == 27) break;  // ESC
     }
 
-    cleanup_and_exit(0);
+    cleanup(0);
     return 0;
 }
