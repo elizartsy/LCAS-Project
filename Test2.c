@@ -187,3 +187,10 @@ int main() {
     gpioUnexport(RESET_GPIO);
     return 0;
 }
+/*
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+terminate called after throwing an instance of 'cv::Exception'
+  what():  OpenCV(4.6.0) ./modules/highgui/src/window.cpp:967: error: (-215:Assertion failed) size.width>0 && size.height>0 in function 'imshow'
+
+Aborted
+*/
