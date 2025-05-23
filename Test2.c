@@ -1,147 +1,168 @@
-/**
- * Live 4-channel thermal feed via TCA9548A multiplexer
- * 2x2 mosaic display with error handling and initialization
+/*
+ * therm2x2.cpp
+ * Raspberry Pi: Read four D6T thermal sensors via TCA9548A I2C multiplexer,
+ * reset TCA channels via GPIO (ioctl), and display feeds in a 2x2 OpenCV window.
  */
 
-#include <opencv2/opencv.hpp>
+#include <stdio.h>
+#include <stdint.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <sys/ioctl.h>
-#include <linux/i2c-dev.h>
-#include <stdint.h>
-#include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/ioctl.h>
+#include <linux/i2c-dev.h>
+#include <linux/gpio.h>
 #include <time.h>
-#include <vector>
-#include <stdlib.h>
+#include <opencv2/opencv.hpp>
 
-// I2C and sensor constants
-#define I2C_DEV        "/dev/i2c-1"
-#define TCA_ADDR       0x70
+/* Thermal sensor defines */
 #define D6T_ADDR       0x0A
 #define D6T_CMD        0x4D
 #define D6T_SET_ADD    0x01
+#define N_ROW          32
+#define N_PIXEL        (N_ROW * N_ROW)
+#define N_READ         ((N_PIXEL + 1) * 2 + 1)
+#define I2C_DEVICE     "/dev/i2c-1"
+
+/* TCA9548A defines */
+#define TCA_ADDR       0x70
+#define NUM_CHANNELS   4
+
+/* GPIO reset pin (TCA reset) */
+#define RESET_CHIP     0   /* GPIO line offset */
+#define GPIO_DEVICE    "/dev/gpiochip0"
+
+/* IIR / AVERAGE settings */
 #define D6T_IIR        0x00
 #define D6T_AVERAGE    0x04
-#define N_ROW          32
-#define N_COL          32
-#define N_PIXEL        (N_ROW * N_COL)
-#define N_READ         ((N_PIXEL + 1) * 2 + 1)
 
-// GPIO reset pin via sysfs
-#define RESET_GPIO     17
-#define SYSFS_GPIO_DIR "/sys/class/gpio"
+/* Globals */
+static uint8_t rbuf[N_READ];
+static double pix_data[N_PIXEL];
 
-uint8_t rbuf[N_READ];
-
-static void delayMs(int ms) {
-    struct timespec ts = { .tv_sec = ms/1000, .tv_nsec = (ms%1000)*1000000 };
+/* Simple sleep in ms */
+static void delay_ms(int ms) {
+    struct timespec ts = { ms/1000, (ms%1000)*1000000 };
     nanosleep(&ts, NULL);
 }
 
-// Sysfs GPIO helpers
-static int gpioWrite(const char *path, const char *value) {
-    int fd = open(path, O_WRONLY);
-    if (fd < 0) return -1;
-    write(fd, value, strlen(value));
+/* Switch TCA channel */
+static int tca_select(int channel) {
+    int fd = open(I2C_DEVICE, O_RDWR);
+    if (fd < 0) { perror("open i2c"); return -1; }
+    if (ioctl(fd, I2C_SLAVE, TCA_ADDR) < 0) { perror("ioctl tca"); close(fd); return -1; }
+    uint8_t mask = 1 << channel;
+    if (write(fd, &mask, 1) != 1) {
+        perror("tca write"); close(fd); return -1;
+    }
     close(fd);
     return 0;
 }
 
-static void initResetPin() {
-    gpioWrite(SYSFS_GPIO_DIR "/export", "17");
-    delayMs(100);
-    gpioWrite(SYSFS_GPIO_DIR "/gpio17/direction", "out");
-    gpioWrite(SYSFS_GPIO_DIR "/gpio17/value", "1");
-}
-
-static void resetMux() {
-    gpioWrite(SYSFS_GPIO_DIR "/gpio17/value", "0");
-    delayMs(5);
-    gpioWrite(SYSFS_GPIO_DIR "/gpio17/value", "1");
-    delayMs(5);
-}
-
-// Select TCA channel
-static void selectMux(int ch) {
-    int fd = open(I2C_DEV, O_RDWR);
-    if (fd<0) return;
-    ioctl(fd, I2C_SLAVE, TCA_ADDR);
-    uint8_t cfg = 1<<ch;
-    write(fd, &cfg, 1);
+/* GPIO reset via ioctl */
+static int gpio_reset_chip(void) {
+    int fd = open(GPIO_DEVICE, O_RDONLY);
+    if (fd < 0) { perror("open gpiochip"); return -1; }
+    struct gpiohandle_request req = {0};
+    req.lineoffsets[0] = RESET_CHIP;
+    req.flags = GPIOHANDLE_REQUEST_OUTPUT;
+    req.lines = 1;
+    if (ioctl(fd, GPIO_GET_LINEHANDLE_IOCTL, &req) < 0) {
+        perror("gpio get handle"); close(fd); return -1; }
+    struct gpiohandle_data data = { .values = {0} };
+    ioctl(req.fd, GPIOHANDLE_SET_LINE_VALUES_IOCTL, &data);
+    delay_ms(10);
+    data.values[0] = 1;
+    ioctl(req.fd, GPIOHANDLE_SET_LINE_VALUES_IOCTL, &data);
+    close(req.fd);
     close(fd);
-    delayMs(1);
+    return 0;
 }
 
-// Initialize D6T sensor on active channel
-static void initSensor() {
-    int fd = open(I2C_DEV, O_RDWR);
-    if (fd<0) return;
-    ioctl(fd, I2C_SLAVE, D6T_ADDR);
-    uint8_t cfg[2] = { D6T_SET_ADD, uint8_t(((D6T_IIR<<4)&0xF0)| (D6T_AVERAGE&0x0F)) };
-    write(fd, cfg, 2);
-    close(fd);
-    delayMs(10);
+/* CRC for PEC */
+static uint8_t calc_crc(uint8_t d) {
+    for (int i = 0; i < 8; i++) {
+        if (d & 0x80) d = (d << 1) ^ 0x07;
+        else d <<= 1;
+    }
+    return d;
 }
 
-// Read frame; returns true on success
-static bool readFrame(std::vector<float>& frame) {
-    int fd = open(I2C_DEV, O_RDWR);
-    if (fd<0) return false;
-    ioctl(fd, I2C_SLAVE, D6T_ADDR);
-    uint8_t cmd = D6T_CMD;
-    if (write(fd, &cmd, 1)!=1) { close(fd); return false; }
-    delayMs(1);
-    if (read(fd, rbuf, N_READ)!=N_READ) { close(fd); return false; }
-    close(fd);
-    frame.resize(N_PIXEL);
-    for (int i=0;i<N_PIXEL;i++){
-        int16_t val = (int16_t)(rbuf[2+2*i] | (rbuf[3+2*i]<<8));
-        frame[i] = val/10.0f;
+static bool D6T_checkPEC(uint8_t buf[], int n) {
+    uint8_t crc = calc_crc((D6T_ADDR << 1) | 1);
+    for (int i = 0; i < n; i++) crc = calc_crc(buf[i] ^ crc);
+    if (crc != buf[n]) {
+        fprintf(stderr, "PEC fail %02X!=%02X\n", crc, buf[n]);
+        return false;
     }
     return true;
 }
 
-int main(){
-    // Ensure OpenCV can create windows when running as root
-    setenv("XDG_RUNTIME_DIR","/tmp",1);
+static int16_t conv_le16(const uint8_t *b, int idx) {
+    return (int16_t)(b[idx] | (b[idx+1] << 8));
+}
 
-    // Setup
-    initResetPin();
-    cv::namedWindow("Thermal 2x2", cv::WINDOW_AUTOSIZE);
-    const int dispSize=256;
-    std::vector<cv::Mat> cells(4, cv::Mat::zeros(dispSize, dispSize, CV_8UC3));
+/* Initialize D6T sensor */
+static void initialSetting(void) {
+    int fd = open(I2C_DEVICE, O_RDWR);
+    if (fd < 0) return;
+    ioctl(fd, I2C_SLAVE, D6T_ADDR);
+    uint8_t dat[2] = { D6T_SET_ADD, (uint8_t)((D6T_IIR << 4) | (D6T_AVERAGE & 0x0F)) };
+    write(fd, dat, 2);
+    close(fd);
+    delay_ms(350);
+}
 
-    // Main loop
-    while(true){
-        for(int ch=0; ch<4; ch++){
-            selectMux(ch);
-            initSensor();
-            delayMs(350);
-            std::vector<float> raw;
-            if(readFrame(raw)){
-                cv::Mat temp(N_ROW, N_COL, CV_32F, raw.data());
-                cv::Mat norm, cmapped, resized;
-                cv::normalize(temp, norm, 0, 255, cv::NORM_MINMAX);
-                norm.convertTo(norm, CV_8U);
-                cv::applyColorMap(norm, cmapped, cv::COLORMAP_JET);
-                cv::resize(cmapped, resized, cv::Size(dispSize, dispSize), 0,0,cv::INTER_NEAREST);
-                cells[ch]=resized;
+int main() {
+    // Prepare OpenCV window
+    const std::string winName = "Thermal 2x2";
+    cv::namedWindow(winName, cv::WINDOW_AUTOSIZE);
+
+    // Sensor init
+    initialSetting();
+    delay_ms(390);
+
+    while (true) {
+        // Combined image (grayscale)
+        cv::Mat big(N_ROW * 2, N_ROW * 2, CV_8UC1);
+
+        for (int ch = 0; ch < NUM_CHANNELS; ch++) {
+            // Reset & select
+            gpio_reset_chip();
+            tca_select(ch);
+            delay_ms(50);
+
+            // Read raw data
+            int fd = open(I2C_DEVICE, O_RDWR);
+            ioctl(fd, I2C_SLAVE, D6T_ADDR);
+            write(fd, (uint8_t[]){ D6T_CMD }, 1);
+            read(fd, rbuf, N_READ);
+            close(fd);
+            D6T_checkPEC(rbuf, N_READ - 1);
+
+            // Fill small tile
+            cv::Mat tile(N_ROW, N_ROW, CV_8UC1);
+            for (int i = 0; i < N_PIXEL; i++) {
+                pix_data[i] = conv_le16(rbuf, 2 + 2*i) / 10.0;
+                tile.data[i] = static_cast<uint8_t>(pix_data[i]);
             }
-            resetMux();
-        }
-        // Build mosaic and display
-        cv::Mat top, bottom, mosaic;
-        cv::hconcat(cells[0], cells[1], top);
-        cv::hconcat(cells[2], cells[3], bottom);
-        cv::vconcat(top, bottom, mosaic);
 
-        if(mosaic.cols>0 && mosaic.rows>0)
-            cv::imshow("Thermal 2x2", mosaic);
-        if(cv::waitKey(1)==27) break;
+            // Copy into big
+            int dx = (ch % 2) * N_ROW;
+            int dy = (ch / 2) * N_ROW;
+            tile.copyTo(big(cv::Rect(dx, dy, N_ROW, N_ROW)));
+        }
+
+        // Apply color map and display
+        cv::Mat color;
+        cv::applyColorMap(big, color, cv::COLORMAP_JET);
+        cv::imshow(winName, color);
+
+        if (cv::waitKey(1) == 27) break;  // ESC to exit
+        delay_ms(200);
     }
-    // Cleanup
-    gpioWrite(SYSFS_GPIO_DIR "/unexport", "17");
+
     return 0;
 }
+
