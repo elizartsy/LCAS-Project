@@ -1,106 +1,140 @@
-// main.cpp: Live 4-channel Omron D6T-324 thermal video viewer over TCA9548A on Raspberry Pi 5
+/*
+ * Live 4-channel thermal feed via TCA9548A I2C multiplexer on Raspberry Pi
+ * Displays 2x2 mosaic window using OpenCV
+ * Resets multiplexer via GPIO pin after each channel use
+ *
+ * MIT License (sensor code by OMRON)
+ */
 
-#include <iostream>
-#include <vector>
+#include <opencv2/opencv.hpp>
+#include <wiringPi.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
-#include <opencv2/opencv.hpp>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
+#include <time.h>
 
-// I2C addresses
-constexpr int I2C_BUS = 1;            // /dev/i2c-1
-constexpr int TCA_ADDR = 0x70;
-constexpr int D6T_ADDR = 0x0A;        // Omron D6T default
+// I2C device
+#define I2C_DEV "/dev/i2c-1"
 
-// D6T-324: 32x32 pixels -> 1024 readings; 2 bytes each + 2-byte status
-constexpr int D6T_PX = 32 * 32;
-constexpr int D6T_BYTES = 2 + D6T_PX * 2;
+// Thermal sensor (D6T) parameters
+#define D6T_ADDR       0x0A
+#define D6T_CMD        0x4D
+#define N_ROW          32
+#define N_COL          32
+#define N_PIXEL        (N_ROW * N_COL)
+#define N_READ         ((N_PIXEL + 1) * 2 + 1)
 
-// Select channel on TCA9548A
-bool selectChannel(int fd, int channel) {
-    if (channel < 0 || channel > 7) return false;
-    uint8_t cfg = 1 << channel;
-    if (ioctl(fd, I2C_SLAVE, TCA_ADDR) < 0) return false;
-    if (write(fd, &cfg, 1) != 1) return false;
-    return true;
+// TCA9548A multiplexer address
+#define TCA_ADDR       0x70
+
+// GPIO pin for TCA reset (BCM numbering)
+const int RESET_PIN = 17;
+
+uint8_t rbuf[N_READ];
+
+void delayMs(int ms) {
+    struct timespec ts = { .tv_sec = ms / 1000,
+                          .tv_nsec = (ms % 1000) * 1000000 };
+    nanosleep(&ts, NULL);
 }
 
-// Read raw D6T data into buffer (big-endian signed 16-bit)
-bool readD6T(int fd, std::vector<int16_t>& buf) {
-    if (ioctl(fd, I2C_SLAVE, D6T_ADDR) < 0) return false;
-    std::vector<uint8_t> raw(D6T_BYTES);
-    if (read(fd, raw.data(), D6T_BYTES) != D6T_BYTES) return false;
-    buf.resize(D6T_PX);
-    // Skip first two status bytes, then each pixel is signed 16-bit BE
-    for (int i = 0; i < D6T_PX; ++i) {
-        int idx = 2 + i * 2;
-        int16_t val = (raw[idx] << 8) | raw[idx + 1];
-        buf[i] = val;
-    }
-    return true;
-}
-
-int main() {
-    // Open I2C bus
-    int fd = open("/dev/i2c-1", O_RDWR);
+// Select TCA channel 0-7
+void selectMux(int channel) {
+    int fd = open(I2C_DEV, O_RDWR);
     if (fd < 0) {
-        std::cerr << "Failed to open I2C bus" << std::endl;
-        return 1;
+        fprintf(stderr, "I2C open failed: %s\n", strerror(errno));
+        return;
     }
-
-    // Prepare OpenCV windows
-    cv::namedWindow("Thermal Mosaic", cv::WINDOW_AUTOSIZE);
-
-    std::vector<std::vector<int16_t>> frames(4);
-    while (true) {
-        // For each sensor channel
-        std::vector<cv::Mat> panels;
-        for (int ch = 0; ch < 4; ++ch) {
-            if (!selectChannel(fd, ch)) {
-                std::cerr << "Failed to select channel " << ch << std::endl;
-                continue;
-            }
-            if (!readD6T(fd, frames[ch])) {
-                std::cerr << "Read error on sensor " << ch << std::endl;
-                continue;
-            }
-            // Convert to float matrix
-            cv::Mat raw(D6T_PX, 1, CV_16S, frames[ch].data());
-            cv::Mat tmp;
-            raw.convertTo(tmp, CV_32F, 0.1f); // 0.1°C per LSB
-            cv::Mat img = tmp.reshape(1, 32);
-            // Normalize and apply colormap
-            cv::Mat norm;
-            cv::normalize(img, norm, 0.0, 255.0, cv::NORM_MINMAX);
-            norm.convertTo(norm, CV_8U);
-            cv::Mat color;
-            cv::applyColorMap(norm, color, cv::COLORMAP_JET);
-            // Resize for better visibility
-            cv::resize(color, color, cv::Size(), 8, 8, cv::INTER_NEAREST);
-            panels.push_back(color);
-        }
-        // Stitch 2x2 mosaic
-        int h = panels[0].rows, w = panels[0].cols;
-        cv::Mat top, bot, mosaic;
-        cv::hconcat(panels[0], panels[1], top);
-        cv::hconcat(panels[2], panels[3], bot);
-        cv::vconcat(top, bot, mosaic);
-
-        cv::imshow("Thermal Mosaic", mosaic);
-        if (cv::waitKey(1) == 27) break;  // Exit on ESC
+    if (ioctl(fd, I2C_SLAVE, TCA_ADDR) < 0) {
+        fprintf(stderr, "Select TCA failed: %s\n", strerror(errno));
+        close(fd);
+        return;
     }
-
+    uint8_t cfg = 1 << channel;
+    write(fd, &cfg, 1);
     close(fd);
+}
+
+// Reset TCA reset pin after finishing on a channel
+void resetMux() {
+    digitalWrite(RESET_PIN, LOW);
+    delayMs(5);
+    digitalWrite(RESET_PIN, HIGH);
+    delayMs(5);
+}
+
+// Read one frame from current channel
+int readSensorFrame(std::vector<float>& frame) {
+    int fd = open(I2C_DEV, O_RDWR);
+    if (fd < 0) return -1;
+    if (ioctl(fd, I2C_SLAVE, D6T_ADDR) < 0) {
+        close(fd);
+        return -2;
+    }
+    uint8_t cmd = D6T_CMD;
+    if (write(fd, &cmd, 1) != 1) {
+        close(fd);
+        return -3;
+    }
+    delayMs(1);
+    if (read(fd, rbuf, N_READ) != N_READ) {
+        close(fd);
+        return -4;
+    }
+    close(fd);
+
+    frame.resize(N_PIXEL);
+    for (int i = 0; i < N_PIXEL; i++) {
+        int16_t tmp = (int16_t)(rbuf[2+2*i] | (rbuf[3+2*i] << 8));
+        frame[i] = tmp / 10.0f;
+    }
     return 0;
 }
 
-// CMakeLists.txt:
-// ----------------
-// cmake_minimum_required(VERSION 3.10)
-// project(thermal_vibe_code)
-// find_package(OpenCV REQUIRED)
-// add_executable(main main.cpp)
-// target_include_directories(main PRIVATE /usr/include)
-// target_link_libraries(main PRIVATE ${OpenCV_LIBS})
-// set_target_properties(main PROPERTIES CXX_STANDARD 11)
+int main() {
+    // Init wiringPi for GPIO
+    wiringPiSetupGpio();
+    pinMode(RESET_PIN, OUTPUT);
+    digitalWrite(RESET_PIN, HIGH);
+
+    // OpenCV window
+    cv::namedWindow("Thermal 2x2", cv::WINDOW_AUTOSIZE);
+    const int dispSize = 256;
+    std::vector<cv::Mat> cells(4);
+
+    while (true) {
+        for (int ch = 0; ch < 4; ch++) {
+            // Select and read
+            selectMux(ch);
+            delayMs(350);           // sensor wake delay
+            std::vector<float> rawFrame;
+            if (readSensorFrame(rawFrame) == 0) {
+                // Build Mat
+                cv::Mat temp(N_ROW, N_COL, CV_32F, rawFrame.data());
+                cv::Mat norm, colored, resized;
+                cv::normalize(temp, norm, 0, 255, cv::NORM_MINMAX);
+                norm.convertTo(norm, CV_8U);
+                cv::applyColorMap(norm, colored, cv::COLORMAP_JET);
+                cv::resize(colored, resized, cv::Size(dispSize, dispSize), 0, 0, cv::INTER_NEAREST);
+                cells[ch] = resized;
+            }
+            // After using channel, reset the mux
+            resetMux();
+        }
+
+        // Compose mosaic
+        cv::Mat top, bottom, mosaic;
+        cv::hconcat(cells[0], cells[1], top);
+        cv::hconcat(cells[2], cells[3], bottom);
+        cv::vconcat(top, bottom, mosaic);
+
+        cv::imshow("Thermal 2x2", mosaic);
+        if (cv::waitKey(1) == 27) break; // ESC
+    }
+    return 0;
+}
