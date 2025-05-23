@@ -136,7 +136,8 @@ int main() {
             // Read raw data
             int fd = open(I2C_DEVICE, O_RDWR);
             ioctl(fd, I2C_SLAVE, D6T_ADDR);
-            write(fd, (uint8_t[]){ D6T_CMD }, 1);
+            uint8_t cmd = D6T_CMD;
+            write(fd, &cmd, 1);
             read(fd, rbuf, N_READ);
             close(fd);
             D6T_checkPEC(rbuf, N_READ - 1);
