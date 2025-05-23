@@ -1,9 +1,3 @@
-/*
- * therm2x2.cpp
- * Raspberry Pi: Read four D6T thermal sensors via TCA9548A I2C multiplexer,
- * reset TCA channels via GPIO (ioctl), and display feeds in a 2x2 OpenCV window.
- */
-
 #include <stdio.h>
 #include <stdint.h>
 #include <fcntl.h>
@@ -12,174 +6,137 @@
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
+#include <linux/i2c.h>
 #include <linux/gpio.h>
+#include <linux/types.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <stdlib.h>
+#include <stdbool.h>
 #include <time.h>
 #include <opencv2/opencv.hpp>
 
-/* Thermal sensor defines */
-#define D6T_ADDR       0x0A
-#define D6T_CMD        0x4D
-#define D6T_SET_ADD    0x01
-#define N_ROW          32
-#define N_PIXEL        (N_ROW * N_ROW)
-#define N_READ         ((N_PIXEL + 1) * 2 + 1)
-#define I2C_DEVICE     "/dev/i2c-1"
+#define D6T_ADDR 0x0A
+#define D6T_CMD 0x4D
+#define D6T_SET_ADD 0x01
+#define N_ROW 32
+#define N_PIXEL (32 * 32)
+#define N_READ ((N_PIXEL + 1) * 2 + 1)
+#define I2CDEV "/dev/i2c-1"
+#define GPIOCHIP "/dev/gpiochip0"
+#define MUX_ADDR 0x70
+#define MUX_RESET_GPIO 23
+#define MAX_CHANNELS 8
 
-/* TCA9548A defines */
-#define TCA_ADDR       0x70
-#define NUM_CHANNELS   4
+using namespace cv;
 
-/* GPIO reset pin (TCA reset) */
-#define RESET_CHIP     0   /* GPIO line offset */
-#define GPIO_DEVICE    "/dev/gpiochip0"
+uint8_t rbuf[N_READ];
+double pix_data[N_PIXEL];
+double ptat;
 
-/* IIR / AVERAGE settings */
-#define D6T_IIR        0x00
-#define D6T_AVERAGE    0x04
+int i2c_write(uint8_t addr, uint8_t *data, int len) {
+    int fd = open(I2CDEV, O_RDWR);
+    if (fd < 0) return -1;
+    ioctl(fd, I2C_SLAVE, addr);
+    write(fd, data, len);
+    close(fd);
+    return 0;
+}
 
-/* Globals */
-static uint8_t rbuf[N_READ];
-static double pix_data[N_PIXEL];
+int i2c_read(uint8_t devAddr, uint8_t regAddr, uint8_t* data, int length) {
+    int fd = open(I2CDEV, O_RDWR);
+    if (fd < 0) return -1;
 
-/* Simple sleep in ms */
-static void delay_ms(int ms) {
-    struct timespec ts = { ms/1000, (ms%1000)*1000000 };
+    struct i2c_msg msgs[] = {
+        { devAddr, 0, 1, &regAddr },
+        { devAddr, I2C_M_RD, (uint16_t)length, data }
+    };
+    struct i2c_rdwr_ioctl_data ioctl_data = { msgs, 2 };
+    int ret = ioctl(fd, I2C_RDWR, &ioctl_data);
+    close(fd);
+    return ret == 2 ? 0 : -1;
+}
+
+void delay(int ms) {
+    struct timespec ts = { ms / 1000, (ms % 1000) * 1000000 };
     nanosleep(&ts, NULL);
 }
 
-/* Switch TCA channel */
-static int tca_select(int channel) {
-    uint8_t mask = 1 << channel;
-    int fd = open(I2C_DEVICE, O_RDWR);
-    if (fd < 0) { perror("open i2c"); return -1; }
-    /* Use I2C_RDWR ioctl for robust write */
-    if (ioctl(fd, I2C_SLAVE, TCA_ADDR) < 0) {
-        perror("ioctl tca");
-        close(fd);
-        return -1;
-    }
-    struct i2c_msg msg = {
-        .addr = TCA_ADDR,
-        .flags = 0,
-        .len = 1,
-        .buf = &mask
-    };
-    struct i2c_rdwr_ioctl_data xfer = {
-        .msgs = &msg,
-        .nmsgs = 1
-    };
-    if (ioctl(fd, I2C_RDWR, &xfer) < 0) {
-        perror("tca write (ioctl)");
-        close(fd);
-        return -1;
-    }
-    close(fd);
-    return 0;
-}
+int16_t conv8us_s16_le(uint8_t* buf, int n) {
+    return (int16_t)((buf[n + 1] << 8) | buf[n]);
 }
 
-/* GPIO reset via ioctl */
-static int gpio_reset_chip(void) {
-    int fd = open(GPIO_DEVICE, O_RDONLY);
-    if (fd < 0) { perror("open gpiochip"); return -1; }
-    struct gpiohandle_request req = {0};
-    req.lineoffsets[0] = RESET_CHIP;
-    req.flags = GPIOHANDLE_REQUEST_OUTPUT;
+void mux_reset() {
+    int fd = open(GPIOCHIP, O_RDWR);
+    struct gpiohandle_request req = {};
+    strcpy(req.consumer_label, "mux_reset");
     req.lines = 1;
-    if (ioctl(fd, GPIO_GET_LINEHANDLE_IOCTL, &req) < 0) {
-        perror("gpio get handle"); close(fd); return -1; }
-    struct gpiohandle_data data = { .values = {0} };
+    req.lineoffsets[0] = MUX_RESET_GPIO;
+    req.flags = GPIOHANDLE_REQUEST_OUTPUT;
+    req.default_values[0] = 0;
+
+    if (ioctl(fd, GPIO_GET_LINEHANDLE_IOCTL, &req) == -1) {
+        perror("GPIO request failed");
+        close(fd);
+        return;
+    }
+
+    struct gpiohandle_data data = {};
+    data.values[0] = 0;
     ioctl(req.fd, GPIOHANDLE_SET_LINE_VALUES_IOCTL, &data);
-    delay_ms(10);
+    delay(100);
+
     data.values[0] = 1;
     ioctl(req.fd, GPIOHANDLE_SET_LINE_VALUES_IOCTL, &data);
+    delay(100);
+
     close(req.fd);
     close(fd);
-    return 0;
 }
 
-/* CRC for PEC */
-static uint8_t calc_crc(uint8_t d) {
-    for (int i = 0; i < 8; i++) {
-        if (d & 0x80) d = (d << 1) ^ 0x07;
-        else d <<= 1;
+void mux_select_channel(int ch) {
+    if (ch < 0 || ch > 7) return;
+    uint8_t cmd = 1 << ch;
+    i2c_write(MUX_ADDR, &cmd, 1);
+    delay(10);
+}
+
+void read_thermal_data() {
+    memset(rbuf, 0, N_READ);
+    i2c_read(D6T_ADDR, D6T_CMD, rbuf, N_READ);
+    ptat = conv8us_s16_le(rbuf, 0) / 10.0;
+    for (int i = 0; i < N_PIXEL; ++i) {
+        int16_t t = conv8us_s16_le(rbuf, 2 + 2 * i);
+        pix_data[i] = t / 10.0;
     }
-    return d;
 }
 
-static bool D6T_checkPEC(uint8_t buf[], int n) {
-    uint8_t crc = calc_crc((D6T_ADDR << 1) | 1);
-    for (int i = 0; i < n; i++) crc = calc_crc(buf[i] ^ crc);
-    if (crc != buf[n]) {
-        fprintf(stderr, "PEC fail %02X!=%02X\n", crc, buf[n]);
-        return false;
+Mat visualize_thermal_data() {
+    Mat img(N_ROW, N_ROW, CV_8UC1);
+    for (int i = 0; i < N_PIXEL; ++i) {
+        int val = std::clamp((int)(pix_data[i] * 3), 0, 255);
+        img.data[i] = (uint8_t)val;
     }
-    return true;
-}
-
-static int16_t conv_le16(const uint8_t *b, int idx) {
-    return (int16_t)(b[idx] | (b[idx+1] << 8));
-}
-
-/* Initialize D6T sensor */
-static void initialSetting(void) {
-    int fd = open(I2C_DEVICE, O_RDWR);
-    if (fd < 0) return;
-    ioctl(fd, I2C_SLAVE, D6T_ADDR);
-    uint8_t dat[2] = { D6T_SET_ADD, (uint8_t)((D6T_IIR << 4) | (D6T_AVERAGE & 0x0F)) };
-    write(fd, dat, 2);
-    close(fd);
-    delay_ms(350);
+    Mat color;
+    applyColorMap(img, color, COLORMAP_JET);
+    return color;
 }
 
 int main() {
-    // Prepare OpenCV window
-    const std::string winName = "Thermal 2x2";
-    cv::namedWindow(winName, cv::WINDOW_AUTOSIZE);
+    mux_reset();
 
-    // Sensor init
-    initialSetting();
-    delay_ms(390);
+    namedWindow("Thermal Camera", WINDOW_AUTOSIZE);
 
     while (true) {
-        // Combined image (grayscale)
-        cv::Mat big(N_ROW * 2, N_ROW * 2, CV_8UC1);
-
-        for (int ch = 0; ch < NUM_CHANNELS; ch++) {
-            // Reset & select
-            gpio_reset_chip();
-            tca_select(ch);
-            delay_ms(50);
-
-            // Read raw data
-            int fd = open(I2C_DEVICE, O_RDWR);
-            ioctl(fd, I2C_SLAVE, D6T_ADDR);
-            uint8_t cmd = D6T_CMD;
-            write(fd, &cmd, 1);
-            read(fd, rbuf, N_READ);
-            close(fd);
-            D6T_checkPEC(rbuf, N_READ - 1);
-
-            // Fill small tile
-            cv::Mat tile(N_ROW, N_ROW, CV_8UC1);
-            for (int i = 0; i < N_PIXEL; i++) {
-                pix_data[i] = conv_le16(rbuf, 2 + 2*i) / 10.0;
-                tile.data[i] = static_cast<uint8_t>(pix_data[i]);
-            }
-
-            // Copy into big
-            int dx = (ch % 2) * N_ROW;
-            int dy = (ch / 2) * N_ROW;
-            tile.copyTo(big(cv::Rect(dx, dy, N_ROW, N_ROW)));
+        for (int ch = 0; ch < MAX_CHANNELS; ++ch) {
+            mux_select_channel(ch);
+            delay(300); // let camera settle
+            read_thermal_data();
+            Mat frame = visualize_thermal_data();
+            imshow("Thermal Camera", frame);
+            waitKey(1);
         }
-
-        // Apply color map and display
-        cv::Mat color;
-        cv::applyColorMap(big, color, cv::COLORMAP_JET);
-        cv::imshow(winName, color);
-
-        if (cv::waitKey(1) == 27) break;  // ESC to exit
-        delay_ms(200);
     }
 
     return 0;
