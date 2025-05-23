@@ -49,15 +49,33 @@ static void delay_ms(int ms) {
 
 /* Switch TCA channel */
 static int tca_select(int channel) {
+    uint8_t mask = 1 << channel;
     int fd = open(I2C_DEVICE, O_RDWR);
     if (fd < 0) { perror("open i2c"); return -1; }
-    if (ioctl(fd, I2C_SLAVE, TCA_ADDR) < 0) { perror("ioctl tca"); close(fd); return -1; }
-    uint8_t mask = 1 << channel;
-    if (write(fd, &mask, 1) != 1) {
-        perror("tca write"); close(fd); return -1;
+    /* Use I2C_RDWR ioctl for robust write */
+    if (ioctl(fd, I2C_SLAVE, TCA_ADDR) < 0) {
+        perror("ioctl tca");
+        close(fd);
+        return -1;
+    }
+    struct i2c_msg msg = {
+        .addr = TCA_ADDR,
+        .flags = 0,
+        .len = 1,
+        .buf = &mask
+    };
+    struct i2c_rdwr_ioctl_data xfer = {
+        .msgs = &msg,
+        .nmsgs = 1
+    };
+    if (ioctl(fd, I2C_RDWR, &xfer) < 0) {
+        perror("tca write (ioctl)");
+        close(fd);
+        return -1;
     }
     close(fd);
     return 0;
+}
 }
 
 /* GPIO reset via ioctl */
@@ -166,4 +184,3 @@ int main() {
 
     return 0;
 }
-
