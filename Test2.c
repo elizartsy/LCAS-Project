@@ -128,7 +128,7 @@ cv::Mat get_thermal_image() {
             !D6T_checkPEC(rbuf, N_READ - 1)) break;
         //delay(50);
     }
-
+    // Convert data to temperature data (degC)
     ptat = (double)conv8us_s16_le(rbuf, 0) / 10.0;
     for (int i = 0; i < N_PIXEL; i++) {
         int16_t itemp = conv8us_s16_le(rbuf, 2 + 2 * i);
