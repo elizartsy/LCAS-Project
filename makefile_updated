@@ -1,51 +1,28 @@
-.PHONY: d6t-1a d6t-8l d6t-8lh d6t-44l d6t-32l thermal\_display
+.PHONY: d6t-32l
 
-cpplint\_flags := --filter=-readability/casting,-build/include\_subdir
+cpplint_flags := --filter=-readability/casting,-build/include_subdir
 
-ifeq (x\$(cpplint),x)
+ifeq (x$(cpplint),x)
 cpplint := @echo lint with cpplint, option:
 endif
 
-ifeq (x\$(cppcheck),x)
+ifeq (x$(cppcheck),x)
 cppcheck := @echo lint with cppcheck, option:
 endif
 
-CXX      := g++
-CXXFLAGS := -std=c++17
-LDLIBS   := -lgpiod -lopencv\_core -lopencv\_imgproc -lopencv\_highgui
+# OpenCV flags
+OPENCV_CFLAGS := $(shell pkg-config --cflags opencv4)
+OPENCV_LDFLAGS := $(shell pkg-config --libs opencv4)
 
-all: d6t-1a d6t-8l d6t-8lh d6t-44l d6t-32l thermal\_display
+# libgpiod flags
+GPIOD_CFLAGS := $(shell pkg-config --cflags libgpiod)
+GPIOD_LDFLAGS := $(shell pkg-config --libs libgpiod)
 
-# Legacy D6T sensor examples
+CXXFLAGS += -std=c++17 -Wall $(OPENCV_CFLAGS) $(GPIOD_CFLAGS)
 
-d6t-1a: d6t-1a.c
-\$(cpplint) \$(cpplint\_flags) \$^
-\$(cppcheck) --enable=all \$^
-gcc \$(CFLAGS) \$^ -o \$@
-
-d6t-8l: d6t-8l.c
-\$(cpplint) \$(cpplint\_flags) \$^
-\$(cppcheck) --enable=all \$^
-gcc \$(CFLAGS) \$^ -o \$@
-
-d6t-8lh: d6t-8lh.c
-\$(cpplint) \$(cpplint\_flags) \$^
-\$(cppheck) --enable=all \$^
-gcc \$(CFLAGS) \$^ -o \$@
-
-d6t-44l: d6t-44l.c
-\$(cpplint) \$(cpplint\_flags) \$^
-\$(cppcheck) --enable=all \$^
-gcc \$(CFLAGS) \$^ -o \$@
+all: d6t-32l
 
 d6t-32l: d6t-32l.c
-\$(cpplint) \$(cpplint\_flags) \$^
-\$(cppcheck) --enable=all \$^
-gcc \$(CFLAGS) \$^ -o \$@
-
-# Thermal Display application
-
-thermal\_display: thermal\_display.cpp
-\$(cpplint) \$(cpplint\_flags) \$^
-\$(cppcheck) --enable=all \$^
-\$(CXX) \$(CXXFLAGS) \$^ -o \$@ \$(LDLIBS)
+	$(cpplint) $(cpplint_flags) $^
+	$(cppcheck) --enable=all $^
+	g++ $(CXXFLAGS) $^ -o $@ $(OPENCV_LDFLAGS) $(GPIOD_LDFLAGS)
