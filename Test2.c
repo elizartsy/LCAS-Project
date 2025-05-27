@@ -105,7 +105,8 @@ void reset_mux() {
         return;
     }
 
-    struct gpiohandle_data data = {.values[0] = 0};
+    struct gpiohandle_data data = {};
+    data.values[0] = 0;
     ioctl(req.fd, GPIOHANDLE_SET_LINE_VALUES_IOCTL, &data);
     delay(10);
     data.values[0] = 1;
@@ -117,7 +118,7 @@ void reset_mux() {
 void select_mux_channel(int channel) {
     uint8_t data = 1 << channel;
     i2c_write(MUX_ADDR, &data, 1);
-    delay(10);  // give it time to switch
+    //delay(10);  
 }
 
 cv::Mat get_thermal_image() {
@@ -125,7 +126,7 @@ cv::Mat get_thermal_image() {
     for (int retry = 0; retry < 5; retry++) {
         if (i2c_read_reg(D6T_ADDR, D6T_CMD, rbuf, N_READ) == 0 &&
             !D6T_checkPEC(rbuf, N_READ - 1)) break;
-        delay(50);
+        //delay(50);
     }
 
     ptat = (double)conv8us_s16_le(rbuf, 0) / 10.0;
@@ -136,7 +137,7 @@ cv::Mat get_thermal_image() {
 
     cv::Mat thermal(N_ROW, N_ROW, CV_64F, pix_data);
     cv::Mat display;
-    thermal.convertTo(display, CV_8U, 255.0 / 50.0); // scale for display
+    thermal.convertTo(display, CV_8U, 255.0 / 50.0); // temp scaling
     cv::applyColorMap(display, display, cv::COLORMAP_JET);
     return display;
 }
@@ -147,15 +148,15 @@ int main() {
 
     for (int cam = 0; cam < 4; cam++) {
         select_mux_channel(cam);
-        delay(350);
+        //delay(350);
         initialSetting();
-        delay(390);
+        //delay(390);
     }
 
     while (true) {
         for (int cam = 0; cam < 4; cam++) {
             select_mux_channel(cam);
-            delay(50);
+            //delay(50);
             cv::Mat img = get_thermal_image();
             std::string win = "Camera " + std::to_string(cam);
             cv::imshow(win, img);
