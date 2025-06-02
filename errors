@@ -1,0 +1,9 @@
+File "/home/admin/Desktop/AD-Hat/High-Pricision_AD_Hat/python/main.py", line 25, in <module>
+    if (ADC.ADS1263_init_ADC1('ADS1263_400SPS') == -1):
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/admin/Desktop/AD-Hat/High-Pricision_AD_Hat/python/ADS1263.py", line 357, in ADS1263_init_ADC1
+    if (config.module_init() != 0):
+        ^^^^^^^^^^^^^^^^^^^^
+  File "/home/admin/Desktop/AD-Hat/High-Pricision_AD_Hat/python/config.py", line 65, in module_init
+    self.GPIO.setup(self.RST_PIN, self.GPIO.OUT)
+RuntimeError: Cannot determine SOC peripheral base address
