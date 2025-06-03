@@ -39,13 +39,23 @@ void MainWindow::updateFrames() {
         thermalManager.checkAndSaveIfThresholdExceeded(cam, frame);
 
         QImage image = matToQImage(frame);
-        QPixmap pixmap = QPixmap::fromImage(image).scaled(label_cam0->size(), Qt::KeepAspectRatio);
 
+        QLabel* targetLabel = nullptr;
         switch (cam) {
-            case 0: label_cam0->setPixmap(pixmap); break;
-            case 1: label_cam1->setPixmap(pixmap); break;
-            case 2: label_cam2->setPixmap(pixmap); break;
-            case 3: label_cam3->setPixmap(pixmap); break;
+            case 0: targetLabel = label_cam0; break;
+            case 1: targetLabel = label_cam1; break;
+            case 2: targetLabel = label_cam2; break;
+            case 3: targetLabel = label_cam3; break;
+        }
+
+        if (targetLabel) {
+            QPixmap pixmap = QPixmap::fromImage(image).scaled(
+                targetLabel->size(),
+                Qt::KeepAspectRatio,
+                Qt::SmoothTransformation
+            );
+            targetLabel->setPixmap(pixmap);
         }
     }
 }
+
