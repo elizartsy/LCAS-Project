@@ -1,15 +1,41 @@
-mainwindow.cpp:14:8: error: ‘class Ui::MainWindow’ has no member named ‘label_1’
-   14 |     ui.label_1->setText("Camera 0");
-      |        ^~~~~~~
-mainwindow.cpp:15:8: error: ‘class Ui::MainWindow’ has no member named ‘label_2’
-   15 |     ui.label_2->setText("Camera 1");
-      |        ^~~~~~~
-mainwindow.cpp:16:8: error: ‘class Ui::MainWindow’ has no member named ‘label_3’
-   16 |     ui.label_3->setText("Camera 2");
-      |        ^~~~~~~
-mainwindow.cpp:17:8: error: ‘class Ui::MainWindow’ has no member named ‘label_4’
-   17 |     ui.label_4->setText("Camera 3");
-      |        ^~~~~~~
+In file included from mainwindow.cpp:1:
+mainwindow.h:23:5: error: ‘QLabel’ does not name a type
+   23 |     QLabel* label_cam0;
+      |     ^~~~~~
+mainwindow.h:24:5: error: ‘QLabel’ does not name a type
+   24 |     QLabel* label_cam1;
+      |     ^~~~~~
+mainwindow.h:25:5: error: ‘QLabel’ does not name a type
+   25 |     QLabel* label_cam2;
+      |     ^~~~~~
+mainwindow.h:26:5: error: ‘QLabel’ does not name a type
+   26 |     QLabel* label_cam3;
+      |     ^~~~~~
+mainwindow.cpp: In constructor ‘MainWindow::MainWindow(QWidget*)’:
+mainwindow.cpp:13:5: error: ‘label_cam0’ was not declared in this scope
+   13 |     label_cam0 = new QLabel(ui->frame);
+      |     ^~~~~~~~~~
+mainwindow.cpp:13:22: error: expected type-specifier before ‘QLabel’
+   13 |     label_cam0 = new QLabel(ui->frame);
+      |                      ^~~~~~
+mainwindow.cpp:14:5: error: ‘label_cam1’ was not declared in this scope
+   14 |     label_cam1 = new QLabel(ui->frame_2);
+      |     ^~~~~~~~~~
+mainwindow.cpp:14:22: error: expected type-specifier before ‘QLabel’
+   14 |     label_cam1 = new QLabel(ui->frame_2);
+      |                      ^~~~~~
+mainwindow.cpp:15:5: error: ‘label_cam2’ was not declared in this scope
+   15 |     label_cam2 = new QLabel(ui->frame_3);
+      |     ^~~~~~~~~~
+mainwindow.cpp:15:22: error: expected type-specifier before ‘QLabel’
+   15 |     label_cam2 = new QLabel(ui->frame_3);
+      |                      ^~~~~~
+mainwindow.cpp:16:5: error: ‘label_cam3’ was not declared in this scope
+   16 |     label_cam3 = new QLabel(ui->frame_4);
+      |     ^~~~~~~~~~
+mainwindow.cpp:16:22: error: expected type-specifier before ‘QLabel’
+   16 |     label_cam3 = new QLabel(ui->frame_4);
+      |                      ^~~~~~
 mainwindow.cpp: In member function ‘void MainWindow::updateFrames()’:
 mainwindow.cpp:42:62: error: ‘class Ui::MainWindow’ has no member named ‘label_1’
    42 |        QPixmap pixmap = QPixmap::fromImage(image).scaled(ui.label_1->size(), Qt::KeepAspectRatio);
