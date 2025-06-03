@@ -1,10 +1,30 @@
-Package Qt5Widgets was not found in the pkg-config search path.
-Perhaps you should add the directory containing `Qt5Widgets.pc'
-to the PKG_CONFIG_PATH environment variable
-Package 'Qt5Widgets', required by 'virtual:world', not found
-g++ -std=c++17 -Wall -O2  -I/usr/include/opencv4  -c main.cpp -o main.o
-main.cpp:1:10: fatal error: QApplication: No such file or directory
-    1 | #include <QApplication>
-      |          ^~~~~~~~~~~~~~
-compilation terminated.
-make: *** [makefile:37: main.o] Error 1
+mainwindow.cpp:14:8: error: ‘class Ui::MainWindow’ has no member named ‘label_1’
+   14 |     ui.label_1->setText("Camera 0");
+      |        ^~~~~~~
+mainwindow.cpp:15:8: error: ‘class Ui::MainWindow’ has no member named ‘label_2’
+   15 |     ui.label_2->setText("Camera 1");
+      |        ^~~~~~~
+mainwindow.cpp:16:8: error: ‘class Ui::MainWindow’ has no member named ‘label_3’
+   16 |     ui.label_3->setText("Camera 2");
+      |        ^~~~~~~
+mainwindow.cpp:17:8: error: ‘class Ui::MainWindow’ has no member named ‘label_4’
+   17 |     ui.label_4->setText("Camera 3");
+      |        ^~~~~~~
+mainwindow.cpp: In member function ‘void MainWindow::updateFrames()’:
+mainwindow.cpp:42:62: error: ‘class Ui::MainWindow’ has no member named ‘label_1’
+   42 |        QPixmap pixmap = QPixmap::fromImage(image).scaled(ui.label_1->size(), Qt::KeepAspectRatio);
+      |                                                             ^~~~~~~
+
+mainwindow.cpp:45:24: error: ‘class Ui::MainWindow’ has no member named ‘label_1’
+   45 |             case 0: ui.label_1->setPixmap(pixmap); break;
+      |                        ^~~~~~~
+mainwindow.cpp:46:24: error: ‘class Ui::MainWindow’ has no member named ‘label_2’
+   46 |             case 1: ui.label_2->setPixmap(pixmap); break;
+      |                        ^~~~~~~
+mainwindow.cpp:47:24: error: ‘class Ui::MainWindow’ has no member named ‘label_3’
+   47 |             case 2: ui.label_3->setPixmap(pixmap); break;
+      |                        ^~~~~~~
+mainwindow.cpp:48:24: error: ‘class Ui::MainWindow’ has no member named ‘label_4’
+   48 |             case 3: ui.label_4->setPixmap(pixmap); break;
+      |                        ^~~~~~~
+make: *** [makefile:37: mainwindow.o] Error 1
