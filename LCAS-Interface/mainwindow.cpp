@@ -6,15 +6,15 @@
 #include <opencv2/imgcodecs.hpp>
 
 MainWindow::MainWindow(QWidget* parent)
-    : QMainWindow(parent), updateTimer(new QTimer(this)) {
-    ui.setupUi(this);
+    : QMainWindow(parent), ui(new Ui::MainWindow), updateTimer(new QTimer(this)) {
+    ui->setupUi(this);
     thermalManager.initialize();
 
-    // Optional: show label placeholders
-    ui.label_1->setText("Camera 0");
-    ui.label_2->setText("Camera 1");
-    ui.label_3->setText("Camera 2");
-    ui.label_4->setText("Camera 3");
+    label_cam0 = new QLabel(ui->frame);
+    label_cam1 = new QLabel(ui->frame_2);
+    label_cam2 = new QLabel(ui->frame_3);
+    label_cam3 = new QLabel(ui->frame_4);
+    
 
     // Timer to update frames
     connect(updateTimer, &QTimer::timeout, this, &MainWindow::updateFrames);
@@ -39,13 +39,13 @@ void MainWindow::updateFrames() {
         thermalManager.checkAndSaveIfThresholdExceeded(cam, frame);
 
         QImage image = matToQImage(frame);
-        QPixmap pixmap = QPixmap::fromImage(image).scaled(ui.label_1->size(), Qt::KeepAspectRatio);
+        QPixmap pixmap = QPixmap::fromImage(image).scaled(label_cam0->size(), Qt::KeepAspectRatio);
 
         switch (cam) {
-            case 0: ui.label_1->setPixmap(pixmap); break;
-            case 1: ui.label_2->setPixmap(pixmap); break;
-            case 2: ui.label_3->setPixmap(pixmap); break;
-            case 3: ui.label_4->setPixmap(pixmap); break;
+            case 0: label_cam0->setPixmap(pixmap); break;
+            case 1: label_cam1->setPixmap(pixmap); break;
+            case 2: label_cam2->setPixmap(pixmap); break;
+            case 3: label_cam3->setPixmap(pixmap); break;
         }
     }
 }
