@@ -1,38 +1,10 @@
-/home/admin/adhatenv/lib/python3.11/site-packages/gpiozero/devices.py:300: PinFactoryFallback: Falling back from lgpio: No module named 'lgpio'
-  warnings.warn(
-Traceback (most recent call last):
-  File "/home/admin/adhatenv/lib/python3.11/site-packages/gpiozero/pins/pi.py", line 411, in pin
-    pin = self.pins[info]
-          ~~~~~~~~~^^^^^^
-KeyError: PinInfo(number=12, name='GPIO18', names=frozenset({'GPIO18', 'BOARD12', 18, 'WPI1', 'BCM18', '18', 'J8:12'}), pull='', row=6, col=2, interfaces=frozenset({'', 'gpio', 'dpi', 'spi', 'pwm', 'pcm'}))
-
-During handling of the above exception, another exception occurred:
-
-Traceback (most recent call last):
-  File "/home/admin/Desktop/AD-HAT/High-Precision_AD_HAT/python/main.py", line 25, in <module>
-    if (ADC.ADS1263_init_ADC1('ADS1263_400SPS') == -1):
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/admin/Desktop/AD-HAT/High-Precision_AD_HAT/python/ADS1263.py", line 411, in ADS1263_init_ADC1
-    if (self.config.module_init() != 0):
-        ^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/admin/Desktop/AD-HAT/High-Precision_AD_HAT/python/config.py", line 76, in module_init
-    self.rst_pin = self.LED(self.RST_PIN)
-                   ^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/admin/adhatenv/lib/python3.11/site-packages/gpiozero/devices.py", line 108, in __call__
-    self = super().__call__(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/admin/adhatenv/lib/python3.11/site-packages/gpiozero/output_devices.py", line 192, in __init__
-    super().__init__(pin, active_high=active_high,
-  File "/home/admin/adhatenv/lib/python3.11/site-packages/gpiozero/output_devices.py", line 74, in __init__
-    super().__init__(pin, pin_factory=pin_factory)
-  File "/home/admin/adhatenv/lib/python3.11/site-packages/gpiozero/mixins.py", line 75, in __init__
-    super().__init__(*args, **kwargs)
-  File "/home/admin/adhatenv/lib/python3.11/site-packages/gpiozero/devices.py", line 553, in __init__
-    pin = self.pin_factory.pin(pin)
-          ^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/admin/adhatenv/lib/python3.11/site-packages/gpiozero/pins/pi.py", line 413, in pin
-    pin = self.pin_class(self, info)
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/admin/adhatenv/lib/python3.11/site-packages/gpiozero/pins/rpigpio.py", line 101, in __init__
-    GPIO.setup(self._number, GPIO.IN, self.GPIO_PULL_UPS[self._pull])
-RuntimeError: Cannot determine SOC peripheral base address
+Package Qt5Widgets was not found in the pkg-config search path.
+Perhaps you should add the directory containing `Qt5Widgets.pc'
+to the PKG_CONFIG_PATH environment variable
+Package 'Qt5Widgets', required by 'virtual:world', not found
+g++ -std=c++17 -Wall -O2  -I/usr/include/opencv4  -c main.cpp -o main.o
+main.cpp:1:10: fatal error: QApplication: No such file or directory
+    1 | #include <QApplication>
+      |          ^~~~~~~~~~~~~~
+compilation terminated.
+make: *** [makefile:37: main.o] Error 1
