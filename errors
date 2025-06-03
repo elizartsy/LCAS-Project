@@ -1,56 +1,31 @@
-In file included from mainwindow.cpp:1:
-mainwindow.h:23:5: error: ‘QLabel’ does not name a type
-   23 |     QLabel* label_cam0;
-      |     ^~~~~~
-mainwindow.h:24:5: error: ‘QLabel’ does not name a type
-   24 |     QLabel* label_cam1;
-      |     ^~~~~~
-mainwindow.h:25:5: error: ‘QLabel’ does not name a type
-   25 |     QLabel* label_cam2;
-      |     ^~~~~~
-mainwindow.h:26:5: error: ‘QLabel’ does not name a type
-   26 |     QLabel* label_cam3;
-      |     ^~~~~~
 mainwindow.cpp: In constructor ‘MainWindow::MainWindow(QWidget*)’:
-mainwindow.cpp:13:5: error: ‘label_cam0’ was not declared in this scope
+mainwindow.cpp:13:31: error: base operand of ‘->’ has non-pointer type ‘Ui::MainWindow’
    13 |     label_cam0 = new QLabel(ui->frame);
-      |     ^~~~~~~~~~
-mainwindow.cpp:13:22: error: expected type-specifier before ‘QLabel’
-   13 |     label_cam0 = new QLabel(ui->frame);
-      |                      ^~~~~~
-mainwindow.cpp:14:5: error: ‘label_cam1’ was not declared in this scope
+      |                               ^~
+mainwindow.cpp:14:31: error: base operand of ‘->’ has non-pointer type ‘Ui::MainWindow’
    14 |     label_cam1 = new QLabel(ui->frame_2);
-      |     ^~~~~~~~~~
-mainwindow.cpp:14:22: error: expected type-specifier before ‘QLabel’
-   14 |     label_cam1 = new QLabel(ui->frame_2);
-      |                      ^~~~~~
-mainwindow.cpp:15:5: error: ‘label_cam2’ was not declared in this scope
+      |                               ^~
+mainwindow.cpp:15:31: error: base operand of ‘->’ has non-pointer type ‘Ui::MainWindow’
    15 |     label_cam2 = new QLabel(ui->frame_3);
-      |     ^~~~~~~~~~
-mainwindow.cpp:15:22: error: expected type-specifier before ‘QLabel’
-   15 |     label_cam2 = new QLabel(ui->frame_3);
-      |                      ^~~~~~
-mainwindow.cpp:16:5: error: ‘label_cam3’ was not declared in this scope
+      |                               ^~
+mainwindow.cpp:16:31: error: base operand of ‘->’ has non-pointer type ‘Ui::MainWindow’
    16 |     label_cam3 = new QLabel(ui->frame_4);
-      |     ^~~~~~~~~~
-mainwindow.cpp:16:22: error: expected type-specifier before ‘QLabel’
-   16 |     label_cam3 = new QLabel(ui->frame_4);
-      |                      ^~~~~~
+      |                               ^~
 mainwindow.cpp: In member function ‘void MainWindow::updateFrames()’:
 mainwindow.cpp:42:62: error: ‘class Ui::MainWindow’ has no member named ‘label_1’
    42 |        QPixmap pixmap = QPixmap::fromImage(image).scaled(ui.label_1->size(), Qt::KeepAspectRatio);
       |                                                             ^~~~~~~
 
-mainwindow.cpp:45:24: error: ‘class Ui::MainWindow’ has no member named ‘label_1’
-   45 |             case 0: ui.label_1->setPixmap(pixmap); break;
-      |                        ^~~~~~~
-mainwindow.cpp:46:24: error: ‘class Ui::MainWindow’ has no member named ‘label_2’
-   46 |             case 1: ui.label_2->setPixmap(pixmap); break;
-      |                        ^~~~~~~
-mainwindow.cpp:47:24: error: ‘class Ui::MainWindow’ has no member named ‘label_3’
-   47 |             case 2: ui.label_3->setPixmap(pixmap); break;
-      |                        ^~~~~~~
-mainwindow.cpp:48:24: error: ‘class Ui::MainWindow’ has no member named ‘label_4’
-   48 |             case 3: ui.label_4->setPixmap(pixmap); break;
-      |                        ^~~~~~~
+mainwindow.cpp:45:24: error: ‘class Ui::MainWindow’ has no member named ‘label_cam0’
+   45 |             case 0: ui.label_cam0->setPixmap(pixmap); break;
+      |                        ^~~~~~~~~~
+mainwindow.cpp:46:24: error: ‘class Ui::MainWindow’ has no member named ‘label_cam1’
+   46 |             case 1: ui.label_cam1->setPixmap(pixmap); break;
+      |                        ^~~~~~~~~~
+mainwindow.cpp:47:24: error: ‘class Ui::MainWindow’ has no member named ‘label_cam2’
+   47 |             case 2: ui.label_cam2->setPixmap(pixmap); break;
+      |                        ^~~~~~~~~~
+mainwindow.cpp:48:24: error: ‘class Ui::MainWindow’ has no member named ‘label_cam3’
+   48 |             case 3: ui.label_cam3->setPixmap(pixmap); break;
+      |                        ^~~~~~~~~~
 make: *** [makefile:37: mainwindow.o] Error 1
