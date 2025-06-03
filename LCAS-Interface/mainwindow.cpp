@@ -15,7 +15,13 @@ MainWindow::MainWindow(QWidget* parent)
     label_cam2 = new QLabel(ui->frame_3);
     label_cam3 = new QLabel(ui->frame_4);
     
-
+    for (QLabel* label : {label_cam0, label_cam1, label_cam2, label_cam3}) {
+        label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        label->setAlignment(Qt::AlignCenter);
+        label->setMinimumSize(200, 200);  // Adjust as needed to match GUI design
+        label->setScaledContents(false);  // We're manually scaling images
+    }
+        
     // Timer to update frames
     connect(updateTimer, &QTimer::timeout, this, &MainWindow::updateFrames);
     updateTimer->start(1000);  // ms
