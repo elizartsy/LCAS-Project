@@ -1,15 +1,12 @@
-mainwindow.cpp: In constructor ‘MainWindow::MainWindow(QWidget*)’:
-mainwindow.cpp:29:63: error: ‘updateADCReading’ is not a member of ‘MainWindow’
-   29 |   connect(updateTimer, &QTimer::timeout, this, &MainWindow::updateADCReading);
-      |                                                             ^~~~~~~~~~~~~~~~
-
-mainwindow.cpp: At global scope:
-mainwindow.cpp:71:6: error: no declaration matches ‘void MainWindow::updateADCReading()’
-   71 | void MainWindow::updateADCReading() {
-      |      ^~~~~~~~~~
-mainwindow.cpp:71:6: note: no functions named ‘void MainWindow::updateADCReading()’
-In file included from mainwindow.cpp:1:
-mainwindow.h:9:7: note: ‘class MainWindow’ defined here
-    9 | class MainWindow : public QMainWindow {
-      |       ^~~~~~~~~~
+mainwindow.cpp: In member function ‘void MainWindow::updateADCReading()’:
+mainwindow.cpp:88:5: error: expected primary-expression before ‘.’ token
+   88 |     .
+      |     ^
+mainwindow.cpp:89:5: error: expected unqualified-id before ‘if’
+   89 |     if (lines.size() >= 4) {
+      |     ^~
+mainwindow.cpp:94:7: error: ‘else’ without a previous ‘if’
+   94 |     } else {
+      |       ^~~~
 make: *** [makefile:37: mainwindow.o] Error 1
+
