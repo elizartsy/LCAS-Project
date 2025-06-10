@@ -25,4 +25,8 @@ private:
     QLabel* label_cam1;
     QLabel* label_cam2;
     QLabel* label_cam3;
+
+    QProcess* adcProcess;           // Process to run the ADC Python script
+    void handleADCOutput();         // Slot to handle new ADC data
+
 };
