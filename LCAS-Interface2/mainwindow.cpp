@@ -12,6 +12,13 @@ MainWindow::MainWindow(QWidget* parent)
     ui->setupUi(this);
     thermalManager.initialize();
 
+    adcProcess = new QProcess(this);
+    adcProcess->setProgram("python3");
+    adcProcess->setArguments(QStringList() << "/home/pi/readadcsimple.py");
+    adcProcess->setProcessChannelMode(QProcess::MergedChannels); // Merge stdout + stderr
+    connect(adcProcess, &QProcess::readyReadStandardOutput, this, &MainWindow::handleADCOutput);
+    adcProcess->start();
+
     label_cam0 = new QLabel(ui->frame);
     label_cam1 = new QLabel(ui->frame_2);
     label_cam2 = new QLabel(ui->frame_3);
