@@ -68,33 +68,26 @@ void MainWindow::updateFrames() {
     }
 }
 
-void MainWindow::updateADCReading() {
-    QProcess process;
-    process.start("python3", QStringList() << "/home/pi/read_adc_once.py");
+void MainWindow::handleADCOutput() {
+    while (adcProcess->canReadLine()) {
+        QByteArray line = adcProcess->readLine().trimmed();
+        QList<QByteArray> values = line.split(',');
 
-    if (!process.waitForStarted(1000)) {
-        qWarning("Failed to start ADC script");
-        return;
-    }
+        if (values.size() >= 4) {
+            bool ok[4];
+            double val0 = values[0].toDouble(&ok[0]);
+            double val1 = values[1].toDouble(&ok[1]);
+            double val2 = values[2].toDouble(&ok[2]);
+            double val3 = values[3].toDouble(&ok[3]);
 
-    if (!process.waitForFinished(2000)) {
-        qWarning("ADC script timeout");
-        return;
-    }
-
-    QString output = process.readAllStandardOutput().trimmed();
-    QStringList lines = output.split('\n', Qt::SkipEmptyParts);
-
-    .
-    if (lines.size() >= 4) {
-        ui->lcdADC0->display(lines[0].toDouble());
-        ui->lcdADC1->display(lines[1].toDouble());
-        ui->lcdADC2->display(lines[2].toDouble());
-        ui->lcdADC3->display(lines[3].toDouble());
-    } else {
-        qWarning("Unexpected number of ADC channels received: %d", lines.size());
+            if (ok[0]) ui->lcdNumber->display(val0);
+            if (ok[1]) ui->lcdNumber_1->display(val1);
+            if (ok[2]) ui->lcdNumber_2->display(val2);
+            if (ok[3]) ui->lcdNumber_3->display(val3);
+        }
     }
 }
+
 
 
 
