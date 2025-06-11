@@ -18,9 +18,9 @@ public:
 private slots:
     void updateFrames();
 
-    void handleVoltageChanged1(double);
-    void handleCurrentChanged1(double);
-    void handleToggleOutput1();
+    void handleVoltageChanged(double);
+    void handleCurrentChanged(double);
+    void handleToggleOutput();
 
     void handleVoltageChanged2(double);
     void handleCurrentChanged2(double);

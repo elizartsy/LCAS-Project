@@ -1,10 +1,11 @@
-h#include "mainwindow.h"
+#include "mainwindow.h"
 #include <QPixmap>
 #include <QImage>
 #include <QTimer>
 #include <QProcess>
 #include <QLCDNumber>
 #include <QDebug>
+#include <QThread>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/imgcodecs.hpp>
 
@@ -20,12 +21,12 @@ MainWindow::MainWindow(QWidget* parent)
     connect(ui->PSoutputButton, &QPushButton::clicked,
         this, &MainWindow::handleToggleOutput);
 
-    connect(ui->doubleSpinBox_Vset2, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
-        this, &MainWindow::handleVoltageChanged_2);
-    connect(ui->doubleSpinBox_Iset2, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
-        this, &MainWindow::handleCurrentChanged_2);
-    connect(ui->PSoutputButton2, &QPushButton::clicked,
-        this, &MainWindow::handleToggleOutput_2);
+    connect(ui->doubleSpinBox_Vset_2, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+        this, &MainWindow::handleVoltageChanged2);
+    connect(ui->doubleSpinBox_Iset_2, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+        this, &MainWindow::handleCurrentChanged2);
+    connect(ui->PSoutputButton_2, &QPushButton::clicked,
+        this, &MainWindow::handleToggleOutput2);
 
 
     adcProcess = new QProcess(this);
@@ -167,15 +168,15 @@ void MainWindow::sendCommandToPowerSupply(const QString& address, const QString&
 }
 
 
-void MainWindow::handleVoltageChanged1(double voltage) {
+void MainWindow::handleVoltageChanged(double voltage) {
     sendCommandToPowerSupply("06", QString("PV %1\r").arg(voltage, 0, 'f', 2));
 }
 
-void MainWindow::handleCurrentChanged1(double current) {
+void MainWindow::handleCurrentChanged(double current) {
     sendCommandToPowerSupply("06", QString("PC %1\r").arg(current, 0, 'f', 2));
 }
 
-void MainWindow::handleToggleOutput1() {
+void MainWindow::handleToggleOutput() {
     static bool outputOn1 = false;
     outputOn1 = !outputOn1;
     sendCommandToPowerSupply("06", QString("OUT %1\r").arg(outputOn1 ? 1 : 0));
@@ -202,7 +203,7 @@ void MainWindow::handleToggleOutput2() {
     QString style = outputOn2
         ? "background-color: green; border: 1px solid black;"
         : "background-color: red; border: 1px solid black;";
-    ui->OutIndicatorFrame2->setStyleSheet(style);
+    ui->OutIndicatorFrame_2->setStyleSheet(style);
 }
 
 
