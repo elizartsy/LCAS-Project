@@ -4,6 +4,7 @@
 #include <QTimer>
 #include <QProcess>
 #include <QLCDNumber>
+#include <QDebug>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/imgcodecs.hpp>
 
