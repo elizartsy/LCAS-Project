@@ -34,9 +34,16 @@ MainWindow::MainWindow(QWidget* parent)
     powerSerial->setParity(QSerialPort::NoParity);
     powerSerial->setStopBits(QSerialPort::OneStop);
     powerSerial->setFlowControl(QSerialPort::NoFlowControl);
-    if (!powerSerial->open(QIODevice::WriteOnly)) {
-        qDebug() << "Failed to open power serial port";
+    if (powerSerial->open(QIODevice::ReadWrite)) {
+    qDebug() << "Power serial port opened";
+
+    QByteArray addressCommand = "ADR 06\r";  // Set address to 6
+    powerSerial->write(addressCommand);
+    qDebug() << "Sent: " << addressCommand;
+    } else {
+    qDebug() << "Failed to open power serial port";
     }
+
 
 
     label_cam0 = new QLabel(ui->frame);
