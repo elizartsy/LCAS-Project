@@ -1,12 +1,37 @@
-mainwindow.cpp: In member function ‘void MainWindow::updateADCReading()’:
-mainwindow.cpp:88:5: error: expected primary-expression before ‘.’ token
-   88 |     .
-      |     ^
-mainwindow.cpp:89:5: error: expected unqualified-id before ‘if’
-   89 |     if (lines.size() >= 4) {
-      |     ^~
-mainwindow.cpp:94:7: error: ‘else’ without a previous ‘if’
-   94 |     } else {
-      |       ^~~~
+mainwindow.cpp: In constructor ‘MainWindow::MainWindow(QWidget*)’:
+mainwindow.cpp:30:15: error: invalid use of incomplete type ‘class QDebug’
+   30 |         qDebug() << "Failed to open power serial port";
+In file included from /usr/include/aarch64-linux-gnu/qt5/QtCore/qglobal.h:1303,
+                 from /usr/include/aarch64-linux-gnu/qt5/QtGui/qtguiglobal.h:43,
+                 from /usr/include/aarch64-linux-gnu/qt5/QtWidgets/qtwidgetsglobal.h:43,
+                 from /usr/include/aarch64-linux-gnu/qt5/QtWidgets/qmainwindow.h:43,
+                 from /usr/include/aarch64-linux-gnu/qt5/QtWidgets/QMainWindow:1,
+                 from mainwindow.h:3,
+                 from mainwindow.cpp:1:
+/usr/include/aarch64-linux-gnu/qt5/QtCore/qlogging.h:57:7: note: forward declaration of ‘class QDebug’
+   57 | class QDebug;
+      |       ^~~~~~
+mainwindow.cpp: In member function ‘void MainWindow::handleADCOutput()’:
+mainwindow.cpp:114:57: error: ‘class QTextEdit’ has no member named ‘value’
+  114 |                     case 0: threshold = ui->textEdit_7->value(); break;
+      |                                                         ^~~~~
+mainwindow.cpp:115:57: error: ‘class QTextEdit’ has no member named ‘value’
+  115 |                     case 1: threshold = ui->textEdit_9->value(); break;
+      |                                                         ^~~~~
+mainwindow.cpp:116:58: error: ‘class QTextEdit’ has no member named ‘value’
+  116 |                     case 2: threshold = ui->textEdit_10->value(); break;
+      |                                                          ^~~~~
+mainwindow.cpp:117:58: error: ‘class QTextEdit’ has no member named ‘value’
+  117 |                     case 3: threshold = ui->textEdit_11->value(); break;
+      |                                                          ^~~~~
+mainwindow.cpp:126:31: error: invalid use of incomplete type ‘class QDebug’
+  126 |                         qDebug() << QString("Channel %1 exceeded threshold (%2 > %3). Shutdown issued.")
+/usr/include/aarch64-linux-gnu/qt5/QtCore/qlogging.h:57:7: note: forward declaration of ‘class QDebug’
+   57 | class QDebug;
+      |       ^~~~~~
+mainwindow.cpp:129:31: error: invalid use of incomplete type ‘class QDebug’
+  129 |                         qDebug() << "Serial port not open — cannot send shutdown command.";
+/usr/include/aarch64-linux-gnu/qt5/QtCore/qlogging.h:57:7: note: forward declaration of ‘class QDebug’
+   57 | class QDebug;
+      |       ^~~~~~
 make: *** [makefile:37: mainwindow.o] Error 1
-
