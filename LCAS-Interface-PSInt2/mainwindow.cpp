@@ -43,6 +43,12 @@ MainWindow::MainWindow(QWidget* parent)
     powerSerial->setParity(QSerialPort::NoParity);
     powerSerial->setStopBits(QSerialPort::OneStop);
     powerSerial->setFlowControl(QSerialPort::NoFlowControl);
+    if (powerSerial->open(QIODevice::ReadWrite)) {
+    qDebug() << "Power serial port opened successfully.";
+    } else {
+    qDebug() << "Failed to open power serial port:" << powerSerial->errorString();
+    }
+
 
     label_cam0 = new QLabel(ui->frame);
     label_cam1 = new QLabel(ui->frame_2);
