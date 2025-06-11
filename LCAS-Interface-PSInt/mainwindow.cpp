@@ -174,7 +174,7 @@ void MainWindow::handleToggleOutput() {
     QString style = outputOn
         ? "background-color: green; border: 1px solid black;"
         : "background-color: red; border: 1px solid black;";
-    ui->outputStatusFrame->setStyleSheet(style);
+    ui->OutIndicatorFrame->setStyleSheet(style);
 }
 
 
