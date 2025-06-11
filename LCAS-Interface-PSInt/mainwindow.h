@@ -17,6 +17,9 @@ public:
 
 private slots:
     void updateFrames();
+    void handleVoltageChanged(double voltage);
+    void handleCurrentChanged(double current);
+    void handleToggleOutput();
 
 private:
     Ui::MainWindow *ui;
