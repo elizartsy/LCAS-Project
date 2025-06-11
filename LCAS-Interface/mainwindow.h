@@ -3,7 +3,9 @@
 #include <QMainWindow>
 #include <QTimer>
 #include <QLabel>
-#include "LCAS-GUI.h"
+#include <QProcess>
+#include <QSerialPort>
+#include "LCASGUIV2.h"
 #include "ThermalCameraManager.h"
 
 class MainWindow : public QMainWindow {
@@ -16,6 +18,17 @@ public:
 private slots:
     void updateFrames();
 
+    void handleVoltageChanged(double);
+    void handleCurrentChanged(double);
+    void handleToggleOutput();
+
+    void handleVoltageChanged2(double);
+    void handleCurrentChanged2(double);
+    void handleToggleOutput2();
+
+    void handleEmergencyStop();
+
+
 private:
     Ui::MainWindow *ui;
     QTimer* updateTimer;
@@ -25,4 +38,14 @@ private:
     QLabel* label_cam1;
     QLabel* label_cam2;
     QLabel* label_cam3;
+
+    QProcess* adcProcess;           // Process to run the ADC Python script
+    void handleADCOutput();         // Slot to handle new ADC data
+
+    QSerialPort* powerSerial;
+    bool powerShutdownTriggered = false;
+
+    void sendCommandToPowerSupply(const QString& address, const QString& command);
+
+
 };
