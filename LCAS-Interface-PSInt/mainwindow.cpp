@@ -118,10 +118,10 @@ void MainWindow::handleADCOutput() {
 
                 double threshold = 0.0;
                 switch (i) {
-                    case 0: threshold = ui->textEdit_7->value(); break;
-                    case 1: threshold = ui->textEdit_9->value(); break;
-                    case 2: threshold = ui->textEdit_10->value(); break;
-                    case 3: threshold = ui->textEdit_11->value(); break;
+                    case 0: threshold = ui->doubleSpinBox->value(); break;
+                    case 1: threshold = ui->doubleSpinBox_2->value(); break;
+                    case 2: threshold = ui->doubleSpinBox_3->value(); break;
+                    case 3: threshold = ui->doubleSpinBox_4->value(); break;
                 }
 
                 if (val[i] > threshold && !powerShutdownTriggered) {
