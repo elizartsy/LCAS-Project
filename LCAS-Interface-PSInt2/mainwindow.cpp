@@ -211,9 +211,3 @@ void MainWindow::handleToggleOutput2() {
         : "background-color: red; border: 1px solid black;";
     ui->OutIndicatorFrame_2->setStyleSheet(style);
 }
-
-
-
-
-
-
