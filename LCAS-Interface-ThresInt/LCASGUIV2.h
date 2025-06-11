@@ -42,10 +42,10 @@ public:
     QLCDNumber *lcdNumber_4;
     QLabel *label_5;
     QLabel *label_8;
-    QTextEdit *textEdit_7;
-    QTextEdit *textEdit_9;
-    QTextEdit *textEdit_10;
-    QTextEdit *textEdit_11;
+    QDoubleSpinBox *spinBox_7;
+    QDoubleSpinBox *spinBox_9;
+    QDoubleSpinBox *spinBox_10;
+    QDoubleSpinBox *spinBox_11;
     QMenuBar *menubar;
     QStatusBar *statusbar;
 
@@ -153,38 +153,43 @@ public:
         label_8->setGeometry(QRect(650, 400, 121, 20));
         label_8->setFrameShape(QFrame::Shape::NoFrame);
         label_8->setAlignment(Qt::AlignmentFlag::AlignCenter);
-        textEdit_7 = new QTextEdit(centralwidget);
-        textEdit_7->setObjectName("textEdit_7");
-        textEdit_7->setGeometry(QRect(660, 430, 104, 31));
-        textEdit_7->setInputMethodHints(Qt::InputMethodHint::ImhDigitsOnly);
-        textEdit_7->setVerticalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
-        textEdit_7->setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
-        textEdit_7->setLineWrapMode(QTextEdit::LineWrapMode::NoWrap);
-        textEdit_7->setAcceptRichText(true);
-        textEdit_9 = new QTextEdit(centralwidget);
-        textEdit_9->setObjectName("textEdit_9");
-        textEdit_9->setGeometry(QRect(660, 470, 104, 31));
-        textEdit_9->setInputMethodHints(Qt::InputMethodHint::ImhDigitsOnly);
-        textEdit_9->setVerticalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
-        textEdit_9->setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
-        textEdit_9->setLineWrapMode(QTextEdit::LineWrapMode::NoWrap);
-        textEdit_9->setAcceptRichText(true);
-        textEdit_10 = new QTextEdit(centralwidget);
-        textEdit_10->setObjectName("textEdit_10");
-        textEdit_10->setGeometry(QRect(660, 510, 104, 31));
-        textEdit_10->setInputMethodHints(Qt::InputMethodHint::ImhDigitsOnly);
-        textEdit_10->setVerticalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
-        textEdit_10->setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
-        textEdit_10->setLineWrapMode(QTextEdit::LineWrapMode::NoWrap);
-        textEdit_10->setAcceptRichText(true);
-        textEdit_11 = new QTextEdit(centralwidget);
-        textEdit_11->setObjectName("textEdit_11");
-        textEdit_11->setGeometry(QRect(660, 550, 104, 31));
-        textEdit_11->setInputMethodHints(Qt::InputMethodHint::ImhDigitsOnly);
-        textEdit_11->setVerticalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
-        textEdit_11->setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
-        textEdit_11->setLineWrapMode(QTextEdit::LineWrapMode::NoWrap);
-        textEdit_11->setAcceptRichText(true);
+        
+        spinBox_7 = new QDoubleSpinBox(centralwidget);
+        spinBox_7->setObjectName("spinBox_7");
+        spinBox_7->setGeometry(QRect(660, 430, 104, 31));
+        spinBox_7->setDecimals(3);
+        spinBox_7->setRange(0.0, 1000.0);       // adjust range if needed
+        spinBox_7->setSingleStep(0.01);
+        spinBox_7->setAlignment(Qt::AlignCenter);
+        spinBox_7->setToolTip("Set V threshold");
+
+        spinBox_9 = new QDoubleSpinBox(centralwidget);
+        spinBox_9->setObjectName("spinBox_9");
+        spinBox_9->setGeometry(QRect(660, 470, 104, 31));
+        spinBox_9->setDecimals(3);
+        spinBox_9->setRange(0.0, 1000.0);
+        spinBox_9->setSingleStep(0.01);
+        spinBox_9->setAlignment(Qt::AlignCenter);
+        spinBox_9->setToolTip("Set V threshold");
+
+        spinBox_10 = new QDoubleSpinBox(centralwidget);
+        spinBox_10->setObjectName("spinBox_10");
+        spinBox_10->setGeometry(QRect(660, 510, 104, 31));
+        spinBox_10->setDecimals(3);
+        spinBox_10->setRange(0.0, 1000.0);
+        spinBox_10->setSingleStep(0.01);
+        spinBox_10->setAlignment(Qt::AlignCenter);
+        spinBox_10->setToolTip("Set V threshold");
+
+        spinBox_11 = new QDoubleSpinBox(centralwidget);
+        spinBox_11->setObjectName("spinBox_11");
+        spinBox_11->setGeometry(QRect(660, 550, 104, 31));
+        spinBox_11->setDecimals(3);
+        spinBox_11->setRange(0.0, 1000.0);
+        spinBox_11->setSingleStep(0.01);
+        spinBox_11->setAlignment(Qt::AlignCenter);
+        spinBox_11->setToolTip("Set V threshold");
+
         MainWindow->setCentralWidget(centralwidget);
         menubar = new QMenuBar(MainWindow);
         menubar->setObjectName("menubar");
@@ -210,10 +215,11 @@ public:
         label_4->setText(QCoreApplication::translate("MainWindow", "Channel 4:", nullptr));
         label_5->setText(QCoreApplication::translate("MainWindow", "V out (V)", nullptr));
         label_8->setText(QCoreApplication::translate("MainWindow", "V threshold (V)", nullptr));
-        textEdit_7->setPlaceholderText(QCoreApplication::translate("MainWindow", "Set V threshold", nullptr));
-        textEdit_9->setPlaceholderText(QCoreApplication::translate("MainWindow", "Set V threshold", nullptr));
-        textEdit_10->setPlaceholderText(QCoreApplication::translate("MainWindow", "Set V threshold", nullptr));
-        textEdit_11->setPlaceholderText(QCoreApplication::translate("MainWindow", "Set V threshold", nullptr));
+        spinBox_7->setToolTip(QCoreApplication::translate("MainWindow", "Set V threshold", nullptr));
+        spinBox_9->setToolTip(QCoreApplication::translate("MainWindow", "Set V threshold", nullptr));
+        spinBox_10->setToolTip(QCoreApplication::translate("MainWindow", "Set V threshold", nullptr));
+        spinBox_11->setToolTip(QCoreApplication::translate("MainWindow", "Set V threshold", nullptr));
+
     } // retranslateUi
 
 };
