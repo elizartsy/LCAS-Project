@@ -3,8 +3,8 @@ CXX = g++
 CXXFLAGS = -std=c++17 -Wall -O2
 
 # Qt variables (use `pkg-config` for simplicity)
-QT_CFLAGS = $(shell pkg-config --cflags Qt5Widgets)
-QT_LIBS   = $(shell pkg-config --libs Qt5Widgets)
+QT_CFLAGS = $(shell pkg-config --cflags Qt5Widgets Qt5SerialPort)
+QT_LIBS   = $(shell pkg-config --libs Qt5Widgets Qt5SerialPort)
 
 # OpenCV variables
 OPENCV_CFLAGS = $(shell pkg-config --cflags opencv4)
