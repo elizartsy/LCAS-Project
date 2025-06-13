@@ -85,7 +85,14 @@ static QImage matToQImage(const cv::Mat& mat) {
 void MainWindow::updateFrames() {
     for (int cam = 0; cam < 4; ++cam) {
         cv::Mat frame = thermalManager.getThermalFrame(cam);
-        thermalManager.checkAndSaveIfThresholdExceeded(cam, frame);
+        bool triggered = thermalManager.checkAndSaveIfThresholdExceeded(cam, frame);
+
+        if (triggered && !powerShutdownTriggered) {
+            powerShutdownTriggered = true;
+            qDebug() << "Thermal threshold exceeded on camera" << cam << " — triggering emergency stop.";
+            handleEmergencyStop();
+            break;
+        }
 
         QImage image = matToQImage(frame);
 
@@ -142,16 +149,10 @@ void MainWindow::handleADCOutput() {
                 if (val[i] > threshold && !powerShutdownTriggered) {
                     powerShutdownTriggered = true;
 
-                    QByteArray shutdownCmd = "PC 0\n";  // Replace with your device's RS485 command
-                    if (powerSerial && powerSerial->isOpen()) {
-                        powerSerial->write(shutdownCmd);
-                        qDebug() << QString("Channel %1 exceeded threshold (%2 > %3). Shutdown issued.")
-                                    .arg(i).arg(val[i]).arg(threshold);
-                    } else {
-                        qDebug() << "Serial port not open — cannot send shutdown command.";
-                    }
-
-                    break;  // Exit loop after first triggering channel
+                    qDebug() << QString("ADC channel %1 exceeded threshold (%2 > %3). Triggering emergency stop.")
+                                .arg(i).arg(val[i]).arg(threshold);
+                    handleEmergencyStop();
+                    break;
                 }
             }
         }
