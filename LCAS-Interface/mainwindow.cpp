@@ -94,12 +94,22 @@ MainWindow::MainWindow(QWidget* parent)
 
 MainWindow::~MainWindow() {
     for (int i = 0; i < 4; ++i) {
-        thermalThreads[i]->quit();
-        thermalThreads[i]->wait();
+        if (thermalWorkers[i]) {
+            QMetaObject::invokeMethod(thermalWorkers[i], "stop", Qt::BlockingQueuedConnection);
+        }
+
+        if (thermalThreads[i]) {
+            thermalThreads[i]->quit();
+            thermalThreads[i]->wait();
+        }
+
         delete thermalWorkers[i];
         delete thermalThreads[i];
     }
+
+    delete ui;
 }
+
 
 
 static QImage matToQImage(const cv::Mat& mat) {
