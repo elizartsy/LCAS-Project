@@ -33,7 +33,10 @@ private:
     Ui::MainWindow *ui;
     QTimer* updateTimer;
     ThermalCameraManager thermalManager;
-    
+
+    QThread* thermalThreads[4];
+    ThermalWorker* thermalWorkers[4];
+
     QLabel* label_cam0;
     QLabel* label_cam1;
     QLabel* label_cam2;
