@@ -1,7 +1,49 @@
-/usr/bin/ld: ThermalWorker.o: in function `ThermalWorker::process()':
-ThermalWorker.cpp:(.text+0x54): undefined reference to `thermalManager'
-/usr/bin/ld: ThermalWorker.cpp:(.text+0x58): undefined reference to `thermalManager'
-/usr/bin/ld: ThermalWorker.cpp:(.text+0x68): undefined reference to `thermalManager'
-/usr/bin/ld: ThermalWorker.cpp:(.text+0x6c): undefined reference to `thermalManager'
-collect2: error: ld returned 1 exit status
-make: *** [makefile:33: thermal_gui] Error 1
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+ThermalWorker::start() called for cam 1
+ThermalWorker::start() called for cam 2
+Timer started in thread: QThread(0x55559eb81fb0)
+Timer started in thread: QThread(0x55559eb70020)
+ThermalWorker::start() called for cam 3
+ThermalWorker::start() called for cam 0
+Timer started in thread: QThread(0x55559eb70000)
+Timer started in thread: QThread(0x55559eb66b10)
+Power serial port opened successfully.
+ThermalWorker emitting frameReady for cam 1 , triggered = false
+QObject::connect: Cannot queue arguments of type 'cv::Mat'
+(Make sure 'cv::Mat' is registered using qRegisterMetaType().)
+ThermalWorker emitting frameReady for cam 2 , triggered = false
+QObject::connect: Cannot queue arguments of type 'cv::Mat'
+(Make sure 'cv::Mat' is registered using qRegisterMetaType().)
+ThermalWorker emitting frameReady for cam 0 , triggered = false
+QObject::connect: Cannot queue arguments of type 'cv::Mat'
+(Make sure 'cv::Mat' is registered using qRegisterMetaType().)
+ThermalWorker emitting frameReady for cam 3 , triggered = false
+QObject::connect: Cannot queue arguments of type 'cv::Mat'
+(Make sure 'cv::Mat' is registered using qRegisterMetaType().)
+ThermalWorker emitting frameReady for cam 1 , triggered = false
+ThermalWorker emitting frameReady for cam 2 , triggered = false
+ThermalWorker emitting frameReady for cam 0 , triggered = false
+ThermalWorker emitting frameReady for cam 3 , triggered = false
+ThermalWorker emitting frameReady for cam 1 , triggered = false
+ThermalWorker emitting frameReady for cam 2 , triggered = false
+ThermalWorker emitting frameReady for cam 0 , triggered = false
+ThermalWorker emitting frameReady for cam 3 , triggered = false
+ThermalWorker emitting frameReady for cam 1 , triggered = false
+ThermalWorker emitting frameReady for cam 2 , triggered = false
+ThermalWorker emitting frameReady for cam 0 , triggered = false
+ThermalWorker emitting frameReady for cam 3 , triggered = false
+ThermalWorker emitting frameReady for cam 1 , triggered = false
+ThermalWorker emitting frameReady for cam 2 , triggered = false
+ThermalWorker emitting frameReady for cam 0 , triggered = false
+QObject::killTimer: Timers cannot be stopped from another thread
+QObject::~QObject: Timers cannot be stopped from another thread
+ThermalWorker emitting frameReady for cam 3 , triggered = false
+ThermalWorker emitting frameReady for cam 1 , triggered = false
+QObject::killTimer: Timers cannot be stopped from another thread
+QObject::~QObject: Timers cannot be stopped from another thread
+ThermalWorker emitting frameReady for cam 2 , triggered = false
+QObject::killTimer: Timers cannot be stopped from another thread
+QObject::~QObject: Timers cannot be stopped from another thread
+ThermalWorker emitting frameReady for cam 3 , triggered = false
+QObject::killTimer: Timers cannot be stopped from another thread
+QObject::~QObject: Timers cannot be stopped from another thread
