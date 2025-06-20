@@ -107,6 +107,7 @@ static QImage matToQImage(const cv::Mat& mat) {
 
 
 void MainWindow::handleThermalFrame(int camIndex, const cv::Mat& frame, bool thresholdExceeded) {
+    qDebug() << "handleThermalFrame called for cam" << camIndex;
     if (thresholdExceeded && !powerShutdownTriggered) {
         powerShutdownTriggered = true;
         qDebug() << "Thermal threshold exceeded on camera" << camIndex << " — triggering emergency stop.";
