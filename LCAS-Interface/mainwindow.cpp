@@ -75,8 +75,6 @@ MainWindow::MainWindow(QWidget* parent)
         label->setScaledContents(false);  
     }
         
-    // Timer to update frames
-    connect(updateTimer, &QTimer::timeout, this, &MainWindow::updateFrames);
     updateTimer->start(50);  // ms
 }
 
@@ -92,38 +90,6 @@ static QImage matToQImage(const cv::Mat& mat) {
     return QImage(rgb.data, rgb.cols, rgb.rows, rgb.step, QImage::Format_RGB888).copy();
 }
 
-void MainWindow::updateFrames() {
-    for (int cam = 0; cam < 4; ++cam) {
-        cv::Mat frame = thermalManager.getThermalFrame(cam);
-        bool triggered = thermalManager.checkAndSaveIfThresholdExceeded(cam, frame);
-
-        if (triggered && !powerShutdownTriggered) {
-            powerShutdownTriggered = true;
-            qDebug() << "Thermal threshold exceeded on camera" << cam << " — triggering emergency stop.";
-            handleEmergencyStop();
-            break;
-        }
-
-        QImage image = matToQImage(frame);
-
-        QLabel* targetLabel = nullptr;
-        switch (cam) {
-            case 0: targetLabel = label_cam0; break;
-            case 1: targetLabel = label_cam1; break;
-            case 2: targetLabel = label_cam2; break;
-            case 3: targetLabel = label_cam3; break;
-        }
-
-        if (targetLabel) {
-            QPixmap pixmap = QPixmap::fromImage(image).scaled(
-                targetLabel->size(),
-                Qt::KeepAspectRatio,
-                Qt::SmoothTransformation
-            );
-            targetLabel->setPixmap(pixmap);
-        }
-    }
-}
 
 void MainWindow::handleThermalFrame(int camIndex, const cv::Mat& frame, bool thresholdExceeded) {
     if (thresholdExceeded && !powerShutdownTriggered) {
