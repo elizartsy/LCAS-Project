@@ -1,24 +1,23 @@
-// thermalworker.h
-#ifndef THERMALWORKER_H
-#define THERMALWORKER_H
-
 #include <QObject>
-#include <opencv2/core.hpp>
+#include <QTimer>
+#include <opencv2/opencv.hpp>
 
 class ThermalWorker : public QObject {
     Q_OBJECT
-
 public:
-    ThermalWorker(int cameraIndex);
+    explicit ThermalWorker(int cameraIndex, QObject *parent = nullptr);
+
+public slots:
+    void start();  // start capturing
+    void stop();   // stop capturing
 
 signals:
     void frameReady(int camIndex, const cv::Mat& frame, bool thresholdExceeded);
 
-public slots:
+private slots:
     void process();
 
 private:
     int camIndex;
+    QTimer* captureTimer;
 };
-
-#endif // THERMALWORKER_H
