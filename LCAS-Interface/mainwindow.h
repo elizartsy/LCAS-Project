@@ -7,6 +7,7 @@
 #include <QSerialPort>
 #include "LCASGUIV2.h"
 #include "ThermalCameraManager.h"
+#include "ThermalWorker.h"
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
