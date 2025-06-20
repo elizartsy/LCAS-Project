@@ -18,6 +18,8 @@ public:
 private slots:
     void updateFrames();
 
+    void handleThermalFrame(int camIndex, const cv::Mat& frame, bool thresholdExceeded);
+
     void handleVoltageChanged(double);
     void handleCurrentChanged(double);
     void handleToggleOutput();
