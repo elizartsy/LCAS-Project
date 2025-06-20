@@ -1,1 +1,7 @@
-make: *** No rule to make target 'thermalworker.o', needed by 'thermal_gui'.  Stop.
+/usr/bin/ld: ThermalWorker.o: in function `ThermalWorker::process()':
+ThermalWorker.cpp:(.text+0x54): undefined reference to `thermalManager'
+/usr/bin/ld: ThermalWorker.cpp:(.text+0x58): undefined reference to `thermalManager'
+/usr/bin/ld: ThermalWorker.cpp:(.text+0x68): undefined reference to `thermalManager'
+/usr/bin/ld: ThermalWorker.cpp:(.text+0x6c): undefined reference to `thermalManager'
+collect2: error: ld returned 1 exit status
+make: *** [makefile:33: thermal_gui] Error 1
