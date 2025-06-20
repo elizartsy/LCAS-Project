@@ -1,11 +1,1 @@
-/usr/bin/ld: mainwindow.o: in function `MainWindow::MainWindow(QWidget*)':
-mainwindow.cpp:(.text+0x1afc): undefined reference to `ThermalWorker::process()'
-/usr/bin/ld: mainwindow.cpp:(.text+0x1b00): undefined reference to `ThermalWorker::process()'
-/usr/bin/ld: mainwindow.cpp:(.text+0x1b08): undefined reference to `ThermalWorker::frameReady(int, cv::Mat const&, bool)'
-/usr/bin/ld: mainwindow.cpp:(.text+0x1b0c): undefined reference to `ThermalWorker::frameReady(int, cv::Mat const&, bool)'
-/usr/bin/ld: mainwindow.cpp:(.text+0x1b10): undefined reference to `ThermalWorker::staticMetaObject'
-/usr/bin/ld: mainwindow.cpp:(.text+0x1b14): undefined reference to `ThermalWorker::staticMetaObject'
-/usr/bin/ld: mainwindow.cpp:(.text+0x1b4c): undefined reference to `ThermalWorker::ThermalWorker(int)'
-collect2: error: ld returned 1 exit status
-make: *** [makefile:33: thermal_gui] Error 1
-
+make: *** No rule to make target 'thermalworker.o', needed by 'thermal_gui'.  Stop.
