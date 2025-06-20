@@ -14,6 +14,16 @@ MainWindow::MainWindow(QWidget* parent)
     ui->setupUi(this);
     thermalManager.initialize();
 
+    for (int i = 0; i < 4; ++i) {
+    thermalThreads[i] = new QThread(this);
+    thermalWorkers[i] = new ThermalWorker(i);
+    thermalWorkers[i]->moveToThread(thermalThreads[i]);
+
+    connect(updateTimer, &QTimer::timeout, thermalWorkers[i], &ThermalWorker::process);
+    connect(thermalWorkers[i], &ThermalWorker::frameReady, this, &MainWindow::handleThermalFrame);
+    thermalThreads[i]->start();
+    }
+        
     connect(ui->doubleSpinBox_Vset, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
         this, &MainWindow::handleVoltageChanged);
     connect(ui->doubleSpinBox_Iset, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
