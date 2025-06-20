@@ -85,7 +85,9 @@ MainWindow::MainWindow(QWidget* parent)
         label->setMinimumSize(200, 200);  
         label->setScaledContents(false);  
     }
-
+    
+    // enable pin 12 for seed power supply control
+    system("gpio -g mode 12 out");
     system("gpio -g write 12 0");
 
 }
@@ -112,15 +114,18 @@ static QImage matToQImage(const cv::Mat& mat) {
 
 
 void MainWindow::handleThermalFrame(int camIndex, const cv::Mat& frame, bool thresholdExceeded) {
-    qDebug() << "handleThermalFrame called for cam" << camIndex;
+    //qDebug() << "handleThermalFrame called for cam" << camIndex;
 
     if (thresholdExceeded && !powerShutdownTriggered) {
         powerShutdownTriggered = true;
-        qDebug() << "Thermal threshold exceeded on camera" << camIndex << " — triggering emergency stop.";
+        //qDebug() << "Thermal threshold exceeded on camera" << camIndex << " — triggering emergency stop.";
         QMetaObject::invokeMethod(this, "handleEmergencyStop", Qt::QueuedConnection);
         return;
     }
 
+    static int frameCounters[4] = {0};
+    frameCounters[camIndex]++;
+    if (frameCounters[camIndex] % 2 != 0) return;
 
     if (frame.empty()) {
         qDebug() << "Frame is empty for cam" << camIndex;
@@ -145,8 +150,8 @@ void MainWindow::handleThermalFrame(int camIndex, const cv::Mat& frame, bool thr
         targetLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
     targetLabel->setPixmap(pixmap);
-    qDebug() << "Displayed frame for cam" << camIndex
-             << " size:" << frame.cols << "x" << frame.rows;
+    //qDebug() << "Displayed frame for cam" << camIndex
+    //         << " size:" << frame.cols << "x" << frame.rows;
 }
 
 
