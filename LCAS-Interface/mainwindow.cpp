@@ -110,6 +110,7 @@ static QImage matToQImage(const cv::Mat& mat) {
 
 void MainWindow::handleThermalFrame(int camIndex, const cv::Mat& frame, bool thresholdExceeded) {
     qDebug() << "handleThermalFrame called for cam" << camIndex;
+
     if (thresholdExceeded && !powerShutdownTriggered) {
         powerShutdownTriggered = true;
         qDebug() << "Thermal threshold exceeded on camera" << camIndex << " — triggering emergency stop.";
@@ -117,9 +118,11 @@ void MainWindow::handleThermalFrame(int camIndex, const cv::Mat& frame, bool thr
         return;
     }
 
-    static int frameCounters[4] = {0};
-    frameCounters[camIndex]++;
-    if (frameCounters[camIndex] % 10 != 0) return;
+
+    if (frame.empty()) {
+        qDebug() << "Frame is empty for cam" << camIndex;
+        return;
+    }
 
     QLabel* targetLabel = nullptr;
     switch (camIndex) {
@@ -129,13 +132,20 @@ void MainWindow::handleThermalFrame(int camIndex, const cv::Mat& frame, bool thr
         case 3: targetLabel = label_cam3; break;
     }
 
-    if (targetLabel) {
-        QImage image = matToQImage(frame);
-        QPixmap pixmap = QPixmap::fromImage(image).scaled(
-            targetLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
-        targetLabel->setPixmap(pixmap);
+    if (!targetLabel) {
+        qDebug() << "No target QLabel for cam" << camIndex;
+        return;
     }
+
+    QImage image = matToQImage(frame);
+    QPixmap pixmap = QPixmap::fromImage(image).scaled(
+        targetLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+    targetLabel->setPixmap(pixmap);
+    qDebug() << "Displayed frame for cam" << camIndex
+             << " size:" << frame.cols << "x" << frame.rows;
 }
+
 
 
 void MainWindow::handleADCOutput() {
