@@ -259,4 +259,3 @@ void MainWindow::handleEmergencyStop() {
 
     qDebug() << "Emergency shutdown complete.";
 }
-

@@ -1,6 +1,7 @@
-#include "thermalworker.h"
+#include "ThermalWorker.h"
 #include "ThermalCameraManager.h"
 #include <QThread>
+#include <QDebug>
 
 extern ThermalCameraManager thermalManager;
 
