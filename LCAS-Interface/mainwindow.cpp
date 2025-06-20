@@ -125,6 +125,35 @@ void MainWindow::updateFrames() {
     }
 }
 
+void MainWindow::handleThermalFrame(int camIndex, const cv::Mat& frame, bool thresholdExceeded) {
+    if (thresholdExceeded && !powerShutdownTriggered) {
+        powerShutdownTriggered = true;
+        qDebug() << "Thermal threshold exceeded on camera" << camIndex << " — triggering emergency stop.";
+        QMetaObject::invokeMethod(this, "handleEmergencyStop", Qt::QueuedConnection);
+        return;
+    }
+
+    static int frameCounters[4] = {0};
+    frameCounters[camIndex]++;
+    if (frameCounters[camIndex] % 10 != 0) return;
+
+    QLabel* targetLabel = nullptr;
+    switch (camIndex) {
+        case 0: targetLabel = label_cam0; break;
+        case 1: targetLabel = label_cam1; break;
+        case 2: targetLabel = label_cam2; break;
+        case 3: targetLabel = label_cam3; break;
+    }
+
+    if (targetLabel) {
+        QImage image = matToQImage(frame);
+        QPixmap pixmap = QPixmap::fromImage(image).scaled(
+            targetLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        targetLabel->setPixmap(pixmap);
+    }
+}
+
+
 void MainWindow::handleADCOutput() {
     while (adcProcess->canReadLine()) {
         QByteArray line = adcProcess->readLine().trimmed();
