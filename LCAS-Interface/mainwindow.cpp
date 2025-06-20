@@ -78,7 +78,15 @@ MainWindow::MainWindow(QWidget* parent)
     updateTimer->start(50);  // ms
 }
 
-MainWindow::~MainWindow() = default;
+MainWindow::~MainWindow() {
+    for (int i = 0; i < 4; ++i) {
+        thermalThreads[i]->quit();
+        thermalThreads[i]->wait();
+        delete thermalWorkers[i];
+        delete thermalThreads[i];
+    }
+}
+
 
 static QImage matToQImage(const cv::Mat& mat) {
     cv::Mat rgb;
