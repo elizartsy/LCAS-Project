@@ -17,12 +17,20 @@ MainWindow::MainWindow(QWidget* parent)
     for (int i = 0; i < 4; ++i) {
     thermalThreads[i] = new QThread(this);
     thermalWorkers[i] = new ThermalWorker(i);
+
     thermalWorkers[i]->moveToThread(thermalThreads[i]);
 
-    connect(updateTimer, &QTimer::timeout, thermalWorkers[i], &ThermalWorker::process);
+    connect(thermalThreads[i], &QThread::started, thermalWorkers[i], &ThermalWorker::start);
     connect(thermalWorkers[i], &ThermalWorker::frameReady, this, &MainWindow::handleThermalFrame);
+
+    // Cleanup
+    connect(this, &MainWindow::destroyed, thermalThreads[i], &QThread::quit);
+    connect(thermalThreads[i], &QThread::finished, thermalWorkers[i], &QObject::deleteLater);
+    connect(thermalThreads[i], &QThread::finished, thermalThreads[i], &QObject::deleteLater);
+
     thermalThreads[i]->start();
     }
+
         
     connect(ui->doubleSpinBox_Vset, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
         this, &MainWindow::handleVoltageChanged);
@@ -75,7 +83,6 @@ MainWindow::MainWindow(QWidget* parent)
         label->setScaledContents(false);  
     }
         
-    updateTimer->start(50);  // ms
 }
 
 MainWindow::~MainWindow() {
