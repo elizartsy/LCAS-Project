@@ -44,6 +44,10 @@ moc_mainwindow.cpp: mainwindow.h
 ui_mainwindow.h: mainwindow.ui
 	uic $< -o $@
 
+moc_thermalworker.cpp: thermalworker.h
+	moc $(QT_CFLAGS) $< -o $@
+
+
 # Clean rule
 clean:
 	rm -f $(TARGET) *.o moc_*.cpp ui_*.h
