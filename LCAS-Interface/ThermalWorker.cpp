@@ -1,14 +1,24 @@
-// thermalworker.cpp
 #include "thermalworker.h"
-#include "thermalmanager.h"  // Assume you already have this class
+#include "ThermalCameraManager.h"
 #include <QThread>
-#include <ctime>
-#include <sys/stat.h>
-#include <opencv2/imgcodecs.hpp>
 
-extern ThermalCameraManager thermalManager;  // Assume global/shared instance
+extern ThermalCameraManager thermalManager;
 
-ThermalWorker::ThermalWorker(int cameraIndex) : camIndex(cameraIndex) {}
+ThermalWorker::ThermalWorker(int cameraIndex, QObject *parent)
+    : QObject(parent), camIndex(cameraIndex) {
+    captureTimer = new QTimer(this);
+    captureTimer->setInterval(50);  // 20 FPS approx
+
+    connect(captureTimer, &QTimer::timeout, this, &ThermalWorker::process);
+}
+
+void ThermalWorker::start() {
+    captureTimer->start();
+}
+
+void ThermalWorker::stop() {
+    captureTimer->stop();
+}
 
 void ThermalWorker::process() {
     cv::Mat frame = thermalManager.getThermalFrame(camIndex);
