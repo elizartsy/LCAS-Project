@@ -20,7 +20,11 @@ MainWindow::MainWindow(QWidget* parent)
     thermalWorkers[i]->moveToThread(thermalThreads[i]);
 
     // When the thread starts, start that worker’s timer
-    connect(thermalThreads[i], &QThread::started, thermalWorkers[i], &ThermalWorker::start);
+    thermalThreads[i]->start();
+
+    // Safely invoke `start()` *in the worker thread's context*
+    QMetaObject::invokeMethod(thermalWorkers[i], "start", Qt::QueuedConnection);
+
 
     connect(thermalWorkers[i], &ThermalWorker::frameReady,
             this, &MainWindow::handleThermalFrame);
