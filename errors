@@ -1,46 +1,11 @@
-mainwindow.cpp: In constructor ‘MainWindow::MainWindow(QWidget*)’:
-mainwindow.cpp:37:15: error: invalid use of incomplete type ‘class QDebug’
-   37 |         qDebug() << "Failed to open power serial port";
-In file included from /usr/include/aarch64-linux-gnu/qt5/QtCore/qglobal.h:1303,
-                 from /usr/include/aarch64-linux-gnu/qt5/QtGui/qtguiglobal.h:43,
-                 from /usr/include/aarch64-linux-gnu/qt5/QtWidgets/qtwidgetsglobal.h:43,
-                 from /usr/include/aarch64-linux-gnu/qt5/QtWidgets/qmainwindow.h:43,
-                 from /usr/include/aarch64-linux-gnu/qt5/QtWidgets/QMainWindow:1,
-                 from mainwindow.h:3,
-                 from mainwindow.cpp:1:
-/usr/include/aarch64-linux-gnu/qt5/QtCore/qlogging.h:57:7: note: forward declaration of ‘class QDebug’
-   57 | class QDebug;
-      |       ^~~~~~
-mainwindow.cpp: In member function ‘void MainWindow::handleADCOutput()’:
-mainwindow.cpp:133:31: error: invalid use of incomplete type ‘class QDebug’
-  133 |                         qDebug() << QString("Channel %1 exceeded threshold (%2 > %3). Shutdown issued.")
-/usr/include/aarch64-linux-gnu/qt5/QtCore/qlogging.h:57:7: note: forward declaration of ‘class QDebug’
-   57 | class QDebug;
-      |       ^~~~~~
-mainwindow.cpp:136:31: error: invalid use of incomplete type ‘class QDebug’
-  136 |                         qDebug() << "Serial port not open — cannot send shutdown command.";
-/usr/include/aarch64-linux-gnu/qt5/QtCore/qlogging.h:57:7: note: forward declaration of ‘class QDebug’
-   57 | class QDebug;
-      |       ^~~~~~
-mainwindow.cpp: In member function ‘void MainWindow::handleVoltageChanged(double)’:
-mainwindow.cpp:150:15: error: invalid use of incomplete type ‘class QDebug’
-  150 |         qDebug() << "Voltage set to" << voltage;
-/usr/include/aarch64-linux-gnu/qt5/QtCore/qlogging.h:57:7: note: forward declaration of ‘class QDebug’
-   57 | class QDebug;
-      |       ^~~~~~
-mainwindow.cpp: In member function ‘void MainWindow::handleCurrentChanged(double)’:
-mainwindow.cpp:158:15: error: invalid use of incomplete type ‘class QDebug’
-  158 |         qDebug() << "Current set to" << current;
-/usr/include/aarch64-linux-gnu/qt5/QtCore/qlogging.h:57:7: note: forward declaration of ‘class QDebug’
-   57 | class QDebug;
-      |       ^~~~~~
-mainwindow.cpp: In member function ‘void MainWindow::handleToggleOutput()’:
-mainwindow.cpp:169:15: error: invalid use of incomplete type ‘class QDebug’
-  169 |         qDebug() << (outputOn ? "Output ON" : "Output OFF");
-/usr/include/aarch64-linux-gnu/qt5/QtCore/qlogging.h:57:7: note: forward declaration of ‘class QDebug’
-   57 | class QDebug;
-      |       ^~~~~~
-mainwindow.cpp:176:9: error: ‘class Ui::MainWindow’ has no member named ‘outputStatusFrame’
-  176 |     ui->outputStatusFrame->setStyleSheet(style);
-      |         ^~~~~~~~~~~~~~~~~
-make: *** [makefile:37: mainwindow.o] Error 1
+/usr/bin/ld: mainwindow.o: in function `MainWindow::MainWindow(QWidget*)':
+mainwindow.cpp:(.text+0x1afc): undefined reference to `ThermalWorker::process()'
+/usr/bin/ld: mainwindow.cpp:(.text+0x1b00): undefined reference to `ThermalWorker::process()'
+/usr/bin/ld: mainwindow.cpp:(.text+0x1b08): undefined reference to `ThermalWorker::frameReady(int, cv::Mat const&, bool)'
+/usr/bin/ld: mainwindow.cpp:(.text+0x1b0c): undefined reference to `ThermalWorker::frameReady(int, cv::Mat const&, bool)'
+/usr/bin/ld: mainwindow.cpp:(.text+0x1b10): undefined reference to `ThermalWorker::staticMetaObject'
+/usr/bin/ld: mainwindow.cpp:(.text+0x1b14): undefined reference to `ThermalWorker::staticMetaObject'
+/usr/bin/ld: mainwindow.cpp:(.text+0x1b4c): undefined reference to `ThermalWorker::ThermalWorker(int)'
+collect2: error: ld returned 1 exit status
+make: *** [makefile:33: thermal_gui] Error 1
+
