@@ -1,49 +1,68 @@
 QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
-ThermalWorker::start() called for cam 1
-ThermalWorker::start() called for cam 2
-Timer started in thread: QThread(0x55559eb81fb0)
-Timer started in thread: QThread(0x55559eb70020)
-ThermalWorker::start() called for cam 3
 ThermalWorker::start() called for cam 0
-Timer started in thread: QThread(0x55559eb70000)
-Timer started in thread: QThread(0x55559eb66b10)
+ThermalWorker::start() called for cam 2
+ThermalWorker::start() called for cam 3
+Timer started in thread: QThread(0x5556662b3aa0)
+Timer started in thread: QThread(0x5556662b3210)
+ThermalWorker::start() called for cam 1
+Timer started in thread: QThread(0x5556662b3a00)
+Timer started in thread: QThread(0x5556662b3230)
 Power serial port opened successfully.
-ThermalWorker emitting frameReady for cam 1 , triggered = false
-QObject::connect: Cannot queue arguments of type 'cv::Mat'
-(Make sure 'cv::Mat' is registered using qRegisterMetaType().)
 ThermalWorker emitting frameReady for cam 2 , triggered = false
-QObject::connect: Cannot queue arguments of type 'cv::Mat'
-(Make sure 'cv::Mat' is registered using qRegisterMetaType().)
+handleThermalFrame called for cam 2
+ThermalWorker emitting frameReady for cam 1 , triggered = false
+handleThermalFrame called for cam 1
 ThermalWorker emitting frameReady for cam 0 , triggered = false
-QObject::connect: Cannot queue arguments of type 'cv::Mat'
-(Make sure 'cv::Mat' is registered using qRegisterMetaType().)
+handleThermalFrame called for cam 0
 ThermalWorker emitting frameReady for cam 3 , triggered = false
-QObject::connect: Cannot queue arguments of type 'cv::Mat'
-(Make sure 'cv::Mat' is registered using qRegisterMetaType().)
-ThermalWorker emitting frameReady for cam 1 , triggered = false
+handleThermalFrame called for cam 3
 ThermalWorker emitting frameReady for cam 2 , triggered = false
+handleThermalFrame called for cam 2
+ThermalWorker emitting frameReady for cam 1 , triggered = false
+handleThermalFrame called for cam 1
 ThermalWorker emitting frameReady for cam 0 , triggered = false
+handleThermalFrame called for cam 0
 ThermalWorker emitting frameReady for cam 3 , triggered = false
-ThermalWorker emitting frameReady for cam 1 , triggered = false
+handleThermalFrame called for cam 3
 ThermalWorker emitting frameReady for cam 2 , triggered = false
+handleThermalFrame called for cam 2
+ThermalWorker emitting frameReady for cam 1 , triggered = false
+handleThermalFrame called for cam 1
 ThermalWorker emitting frameReady for cam 0 , triggered = false
+handleThermalFrame called for cam 0
 ThermalWorker emitting frameReady for cam 3 , triggered = false
-ThermalWorker emitting frameReady for cam 1 , triggered = false
+handleThermalFrame called for cam 3
 ThermalWorker emitting frameReady for cam 2 , triggered = false
+handleThermalFrame called for cam 2
+ThermalWorker emitting frameReady for cam 1 , triggered = false
+handleThermalFrame called for cam 1
 ThermalWorker emitting frameReady for cam 0 , triggered = false
+handleThermalFrame called for cam 0
 ThermalWorker emitting frameReady for cam 3 , triggered = false
-ThermalWorker emitting frameReady for cam 1 , triggered = false
+handleThermalFrame called for cam 3
 ThermalWorker emitting frameReady for cam 2 , triggered = false
+handleThermalFrame called for cam 2
+ThermalWorker emitting frameReady for cam 1 , triggered = false
+handleThermalFrame called for cam 1
 ThermalWorker emitting frameReady for cam 0 , triggered = false
-QObject::killTimer: Timers cannot be stopped from another thread
-QObject::~QObject: Timers cannot be stopped from another thread
+handleThermalFrame called for cam 0
 ThermalWorker emitting frameReady for cam 3 , triggered = false
-ThermalWorker emitting frameReady for cam 1 , triggered = false
-QObject::killTimer: Timers cannot be stopped from another thread
-QObject::~QObject: Timers cannot be stopped from another thread
+handleThermalFrame called for cam 3
 ThermalWorker emitting frameReady for cam 2 , triggered = false
-QObject::killTimer: Timers cannot be stopped from another thread
-QObject::~QObject: Timers cannot be stopped from another thread
+handleThermalFrame called for cam 2
+ThermalWorker emitting frameReady for cam 1 , triggered = false
+handleThermalFrame called for cam 1
+ThermalWorker emitting frameReady for cam 0 , triggered = false
+handleThermalFrame called for cam 0
 ThermalWorker emitting frameReady for cam 3 , triggered = false
-QObject::killTimer: Timers cannot be stopped from another thread
-QObject::~QObject: Timers cannot be stopped from another thread
+handleThermalFrame called for cam 3
+ThermalWorker emitting frameReady for cam 2 , triggered = false
+handleThermalFrame called for cam 2
+ThermalWorker emitting frameReady for cam 1 , triggered = false
+handleThermalFrame called for cam 1
+ThermalWorker emitting frameReady for cam 0 , triggered = false
+handleThermalFrame called for cam 0
+ThermalWorker emitting frameReady for cam 3 , triggered = false
+handleThermalFrame called for cam 3
+ThermalWorker emitting frameReady for cam 2 , triggered = false
+handleThermalFrame called for cam 2
