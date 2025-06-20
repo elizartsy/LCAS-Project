@@ -8,6 +8,7 @@
 #include <QThread>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/imgcodecs.hpp>
+#include <stdlib.h>
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), updateTimer(new QTimer(this)) {
@@ -84,7 +85,9 @@ MainWindow::MainWindow(QWidget* parent)
         label->setMinimumSize(200, 200);  
         label->setScaledContents(false);  
     }
-        
+
+    system("gpio -g write 12 0");
+
 }
 
 MainWindow::~MainWindow() {
@@ -260,12 +263,22 @@ void MainWindow::handleEmergencyStop() {
     sendCommandToPowerSupply("07", "OUT 0\r");
     QThread::msleep(100); // Final pause
 
+    ui->doubleSpinBox_Vset->setValue(0.0);
+    ui->doubleSpinBox_Iset->setValue(0.0);
+
     // === PS1 SECOND ===
     sendCommandToPowerSupply("06", "PC 0\r");
     QThread::msleep(50);
     sendCommandToPowerSupply("06", "PV 0\r");
     QThread::msleep(50);
     sendCommandToPowerSupply("06", "OUT 0\r");
+
+    ui->doubleSpinBox_Vset_2->setValue(0.0);
+    ui->doubleSpinBox_Iset_2->setValue(0.0);
+
+    // SEED PS LAST
+
+    system("gpio -g write 12 1");
 
     // Update visual output indicators
     ui->OutIndicatorFrame->setStyleSheet("background-color: red; border: 1px solid black;");
