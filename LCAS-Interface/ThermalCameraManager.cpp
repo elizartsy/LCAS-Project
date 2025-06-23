@@ -136,6 +136,7 @@ cv::Mat ThermalCameraManager::fetchImage() {
 }
 
 cv::Mat ThermalCameraManager::getThermalFrame(int camIndex) {
+    QMutexLocker locker(&mutex);
     selectMuxChannel(camIndex);
     return fetchImage();
 }

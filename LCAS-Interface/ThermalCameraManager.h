@@ -3,6 +3,7 @@
 
 #include <opencv2/opencv.hpp>
 #include <vector>
+#include <QMutex>
 
 class ThermalCameraManager {
 public:
@@ -26,6 +27,8 @@ public:
     static constexpr int MUX_ADDR = 0x70;
 
 private:
+    QMutex mutex;
+
     void resetMux();
     void selectMuxChannel(int channel);
     void initialSetting();
