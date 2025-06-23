@@ -1,46 +1,68 @@
-mainwindow.cpp: In constructor ‘MainWindow::MainWindow(QWidget*)’:
-mainwindow.cpp:37:15: error: invalid use of incomplete type ‘class QDebug’
-   37 |         qDebug() << "Failed to open power serial port";
-In file included from /usr/include/aarch64-linux-gnu/qt5/QtCore/qglobal.h:1303,
-                 from /usr/include/aarch64-linux-gnu/qt5/QtGui/qtguiglobal.h:43,
-                 from /usr/include/aarch64-linux-gnu/qt5/QtWidgets/qtwidgetsglobal.h:43,
-                 from /usr/include/aarch64-linux-gnu/qt5/QtWidgets/qmainwindow.h:43,
-                 from /usr/include/aarch64-linux-gnu/qt5/QtWidgets/QMainWindow:1,
-                 from mainwindow.h:3,
-                 from mainwindow.cpp:1:
-/usr/include/aarch64-linux-gnu/qt5/QtCore/qlogging.h:57:7: note: forward declaration of ‘class QDebug’
-   57 | class QDebug;
-      |       ^~~~~~
-mainwindow.cpp: In member function ‘void MainWindow::handleADCOutput()’:
-mainwindow.cpp:133:31: error: invalid use of incomplete type ‘class QDebug’
-  133 |                         qDebug() << QString("Channel %1 exceeded threshold (%2 > %3). Shutdown issued.")
-/usr/include/aarch64-linux-gnu/qt5/QtCore/qlogging.h:57:7: note: forward declaration of ‘class QDebug’
-   57 | class QDebug;
-      |       ^~~~~~
-mainwindow.cpp:136:31: error: invalid use of incomplete type ‘class QDebug’
-  136 |                         qDebug() << "Serial port not open — cannot send shutdown command.";
-/usr/include/aarch64-linux-gnu/qt5/QtCore/qlogging.h:57:7: note: forward declaration of ‘class QDebug’
-   57 | class QDebug;
-      |       ^~~~~~
-mainwindow.cpp: In member function ‘void MainWindow::handleVoltageChanged(double)’:
-mainwindow.cpp:150:15: error: invalid use of incomplete type ‘class QDebug’
-  150 |         qDebug() << "Voltage set to" << voltage;
-/usr/include/aarch64-linux-gnu/qt5/QtCore/qlogging.h:57:7: note: forward declaration of ‘class QDebug’
-   57 | class QDebug;
-      |       ^~~~~~
-mainwindow.cpp: In member function ‘void MainWindow::handleCurrentChanged(double)’:
-mainwindow.cpp:158:15: error: invalid use of incomplete type ‘class QDebug’
-  158 |         qDebug() << "Current set to" << current;
-/usr/include/aarch64-linux-gnu/qt5/QtCore/qlogging.h:57:7: note: forward declaration of ‘class QDebug’
-   57 | class QDebug;
-      |       ^~~~~~
-mainwindow.cpp: In member function ‘void MainWindow::handleToggleOutput()’:
-mainwindow.cpp:169:15: error: invalid use of incomplete type ‘class QDebug’
-  169 |         qDebug() << (outputOn ? "Output ON" : "Output OFF");
-/usr/include/aarch64-linux-gnu/qt5/QtCore/qlogging.h:57:7: note: forward declaration of ‘class QDebug’
-   57 | class QDebug;
-      |       ^~~~~~
-mainwindow.cpp:176:9: error: ‘class Ui::MainWindow’ has no member named ‘outputStatusFrame’
-  176 |     ui->outputStatusFrame->setStyleSheet(style);
-      |         ^~~~~~~~~~~~~~~~~
-make: *** [makefile:37: mainwindow.o] Error 1
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+ThermalWorker::start() called for cam 0
+ThermalWorker::start() called for cam 2
+ThermalWorker::start() called for cam 3
+Timer started in thread: QThread(0x5556662b3aa0)
+Timer started in thread: QThread(0x5556662b3210)
+ThermalWorker::start() called for cam 1
+Timer started in thread: QThread(0x5556662b3a00)
+Timer started in thread: QThread(0x5556662b3230)
+Power serial port opened successfully.
+ThermalWorker emitting frameReady for cam 2 , triggered = false
+handleThermalFrame called for cam 2
+ThermalWorker emitting frameReady for cam 1 , triggered = false
+handleThermalFrame called for cam 1
+ThermalWorker emitting frameReady for cam 0 , triggered = false
+handleThermalFrame called for cam 0
+ThermalWorker emitting frameReady for cam 3 , triggered = false
+handleThermalFrame called for cam 3
+ThermalWorker emitting frameReady for cam 2 , triggered = false
+handleThermalFrame called for cam 2
+ThermalWorker emitting frameReady for cam 1 , triggered = false
+handleThermalFrame called for cam 1
+ThermalWorker emitting frameReady for cam 0 , triggered = false
+handleThermalFrame called for cam 0
+ThermalWorker emitting frameReady for cam 3 , triggered = false
+handleThermalFrame called for cam 3
+ThermalWorker emitting frameReady for cam 2 , triggered = false
+handleThermalFrame called for cam 2
+ThermalWorker emitting frameReady for cam 1 , triggered = false
+handleThermalFrame called for cam 1
+ThermalWorker emitting frameReady for cam 0 , triggered = false
+handleThermalFrame called for cam 0
+ThermalWorker emitting frameReady for cam 3 , triggered = false
+handleThermalFrame called for cam 3
+ThermalWorker emitting frameReady for cam 2 , triggered = false
+handleThermalFrame called for cam 2
+ThermalWorker emitting frameReady for cam 1 , triggered = false
+handleThermalFrame called for cam 1
+ThermalWorker emitting frameReady for cam 0 , triggered = false
+handleThermalFrame called for cam 0
+ThermalWorker emitting frameReady for cam 3 , triggered = false
+handleThermalFrame called for cam 3
+ThermalWorker emitting frameReady for cam 2 , triggered = false
+handleThermalFrame called for cam 2
+ThermalWorker emitting frameReady for cam 1 , triggered = false
+handleThermalFrame called for cam 1
+ThermalWorker emitting frameReady for cam 0 , triggered = false
+handleThermalFrame called for cam 0
+ThermalWorker emitting frameReady for cam 3 , triggered = false
+handleThermalFrame called for cam 3
+ThermalWorker emitting frameReady for cam 2 , triggered = false
+handleThermalFrame called for cam 2
+ThermalWorker emitting frameReady for cam 1 , triggered = false
+handleThermalFrame called for cam 1
+ThermalWorker emitting frameReady for cam 0 , triggered = false
+handleThermalFrame called for cam 0
+ThermalWorker emitting frameReady for cam 3 , triggered = false
+handleThermalFrame called for cam 3
+ThermalWorker emitting frameReady for cam 2 , triggered = false
+handleThermalFrame called for cam 2
+ThermalWorker emitting frameReady for cam 1 , triggered = false
+handleThermalFrame called for cam 1
+ThermalWorker emitting frameReady for cam 0 , triggered = false
+handleThermalFrame called for cam 0
+ThermalWorker emitting frameReady for cam 3 , triggered = false
+handleThermalFrame called for cam 3
+ThermalWorker emitting frameReady for cam 2 , triggered = false
+handleThermalFrame called for cam 2

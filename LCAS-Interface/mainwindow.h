@@ -7,6 +7,7 @@
 #include <QSerialPort>
 #include "LCASGUIV2.h"
 #include "ThermalCameraManager.h"
+#include "ThermalWorker.h"
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -16,7 +17,8 @@ public:
     ~MainWindow();
 
 private slots:
-    void updateFrames();
+
+    void handleThermalFrame(int camIndex, const cv::Mat& frame, bool thresholdExceeded);
 
     void handleVoltageChanged(double);
     void handleCurrentChanged(double);
@@ -33,7 +35,10 @@ private:
     Ui::MainWindow *ui;
     QTimer* updateTimer;
     ThermalCameraManager thermalManager;
-    
+
+    QThread* thermalThreads[4];
+    ThermalWorker* thermalWorkers[4];
+
     QLabel* label_cam0;
     QLabel* label_cam1;
     QLabel* label_cam2;

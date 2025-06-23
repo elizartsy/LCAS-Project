@@ -8,12 +8,33 @@
 #include <QThread>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/imgcodecs.hpp>
+#include <stdlib.h>
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), updateTimer(new QTimer(this)) {
     ui->setupUi(this);
     thermalManager.initialize();
 
+    for (int i = 0; i < 4; ++i) {
+    thermalThreads[i] = new QThread(this);
+    thermalWorkers[i] = new ThermalWorker(i);
+    thermalWorkers[i]->moveToThread(thermalThreads[i]);
+
+    // When the thread starts, start that worker’s timer
+    thermalThreads[i]->start();
+
+    // Safely invoke `start()` *in the worker thread's context*
+    QMetaObject::invokeMethod(thermalWorkers[i], "start", Qt::QueuedConnection);
+
+
+    connect(thermalWorkers[i], &ThermalWorker::frameReady,
+            this, &MainWindow::handleThermalFrame);
+
+    thermalThreads[i]->start();
+    }
+
+
+        
     connect(ui->doubleSpinBox_Vset, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
         this, &MainWindow::handleVoltageChanged);
     connect(ui->doubleSpinBox_Iset, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
@@ -34,7 +55,7 @@ MainWindow::MainWindow(QWidget* parent)
 
     adcProcess = new QProcess(this);
     adcProcess->setProgram("python3");
-    adcProcess->setArguments(QStringList() << "/home/admin/Desktop/LCAS-Interface-PSInt2/readadcsimple.py");
+    adcProcess->setArguments(QStringList() << "/home/admin/Desktop/LCAS-Project-ThermalThreading2/LCAS-Interface/readadcsimple.py");
     adcProcess->setProcessChannelMode(QProcess::MergedChannels); // Merge stdout + stderr
     connect(adcProcess, &QProcess::readyReadStandardOutput, this, &MainWindow::handleADCOutput);
     adcProcess->start();
@@ -64,13 +85,22 @@ MainWindow::MainWindow(QWidget* parent)
         label->setMinimumSize(200, 200);  
         label->setScaledContents(false);  
     }
-        
-    // Timer to update frames
-    connect(updateTimer, &QTimer::timeout, this, &MainWindow::updateFrames);
-    updateTimer->start(50);  // ms
+    
+    // enable pin 12 for seed power supply control
+    system("gpio -g mode 12 out");
+    system("gpio -g write 12 0");
+
 }
 
-MainWindow::~MainWindow() = default;
+MainWindow::~MainWindow() {
+    for (int i = 0; i < 4; ++i) {
+        thermalThreads[i]->quit();
+        thermalThreads[i]->wait();
+        delete thermalWorkers[i];
+        delete thermalThreads[i];
+    }
+}
+
 
 static QImage matToQImage(const cv::Mat& mat) {
     cv::Mat rgb;
@@ -82,38 +112,49 @@ static QImage matToQImage(const cv::Mat& mat) {
     return QImage(rgb.data, rgb.cols, rgb.rows, rgb.step, QImage::Format_RGB888).copy();
 }
 
-void MainWindow::updateFrames() {
-    for (int cam = 0; cam < 4; ++cam) {
-        cv::Mat frame = thermalManager.getThermalFrame(cam);
-        bool triggered = thermalManager.checkAndSaveIfThresholdExceeded(cam, frame);
 
-        if (triggered && !powerShutdownTriggered) {
-            powerShutdownTriggered = true;
-            qDebug() << "Thermal threshold exceeded on camera" << cam << " — triggering emergency stop.";
-            handleEmergencyStop();
-            break;
-        }
+void MainWindow::handleThermalFrame(int camIndex, const cv::Mat& frame, bool thresholdExceeded) {
+    //qDebug() << "handleThermalFrame called for cam" << camIndex;
 
-        QImage image = matToQImage(frame);
-
-        QLabel* targetLabel = nullptr;
-        switch (cam) {
-            case 0: targetLabel = label_cam0; break;
-            case 1: targetLabel = label_cam1; break;
-            case 2: targetLabel = label_cam2; break;
-            case 3: targetLabel = label_cam3; break;
-        }
-
-        if (targetLabel) {
-            QPixmap pixmap = QPixmap::fromImage(image).scaled(
-                targetLabel->size(),
-                Qt::KeepAspectRatio,
-                Qt::SmoothTransformation
-            );
-            targetLabel->setPixmap(pixmap);
-        }
+    if (thresholdExceeded && !powerShutdownTriggered) {
+        powerShutdownTriggered = true;
+        //qDebug() << "Thermal threshold exceeded on camera" << camIndex << " — triggering emergency stop.";
+        QMetaObject::invokeMethod(this, "handleEmergencyStop", Qt::QueuedConnection);
+        return;
     }
+    /*
+    static int frameCounters[4] = {0};
+    frameCounters[camIndex]++;
+    if (frameCounters[camIndex] % 2 != 0) return;
+
+    if (frame.empty()) {
+        qDebug() << "Frame is empty for cam" << camIndex;
+        return;
+    }
+    */
+    QLabel* targetLabel = nullptr;
+    switch (camIndex) {
+        case 0: targetLabel = label_cam0; break;
+        case 1: targetLabel = label_cam1; break;
+        case 2: targetLabel = label_cam2; break;
+        case 3: targetLabel = label_cam3; break;
+    }
+
+    if (!targetLabel) {
+        qDebug() << "No target QLabel for cam" << camIndex;
+        return;
+    }
+
+    QImage image = matToQImage(frame);
+    QPixmap pixmap = QPixmap::fromImage(image).scaled(
+        targetLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+    targetLabel->setPixmap(pixmap);
+    //qDebug() << "Displayed frame for cam" << camIndex
+    //         << " size:" << frame.cols << "x" << frame.rows;
 }
+
+
 
 void MainWindow::handleADCOutput() {
     while (adcProcess->canReadLine()) {
@@ -227,6 +268,9 @@ void MainWindow::handleEmergencyStop() {
     sendCommandToPowerSupply("07", "OUT 0\r");
     QThread::msleep(100); // Final pause
 
+    ui->doubleSpinBox_Vset->setValue(0.0);
+    ui->doubleSpinBox_Iset->setValue(0.0);
+
     // === PS1 SECOND ===
     sendCommandToPowerSupply("06", "PC 0\r");
     QThread::msleep(50);
@@ -234,10 +278,16 @@ void MainWindow::handleEmergencyStop() {
     QThread::msleep(50);
     sendCommandToPowerSupply("06", "OUT 0\r");
 
+    ui->doubleSpinBox_Vset_2->setValue(0.0);
+    ui->doubleSpinBox_Iset_2->setValue(0.0);
+
+    // SEED PS LAST
+
+    system("gpio -g write 12 1");
+
     // Update visual output indicators
     ui->OutIndicatorFrame->setStyleSheet("background-color: red; border: 1px solid black;");
     ui->OutIndicatorFrame_2->setStyleSheet("background-color: red; border: 1px solid black;");
 
     qDebug() << "Emergency shutdown complete.";
 }
-
