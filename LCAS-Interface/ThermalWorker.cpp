@@ -9,9 +9,8 @@ ThermalWorker::ThermalWorker(int cameraIndex, QObject *parent)
     : QObject(parent), camIndex(cameraIndex), captureTimer(nullptr) {}
 
 void ThermalWorker::start() {
-    //qDebug() << "ThermalWorker::start() called for cam" << camIndex;
-
-    captureTimer = new QTimer(this);  // now created in correct thread
+   
+    captureTimer = new QTimer(this);  
     captureTimer->setInterval(50);
     connect(captureTimer, &QTimer::timeout, this, &ThermalWorker::process);
     captureTimer->start();
@@ -35,5 +34,5 @@ void ThermalWorker::process() {
     }
     bool triggered = thermalManager.checkAndSaveIfThresholdExceeded(camIndex, frame);
     //qDebug() << "ThermalWorker emitting frameReady for cam" << camIndex << ", triggered =" << triggered;
-    emit frameReady(camIndex, frame.clone(), triggered);  // safer with clone
+    emit frameReady(camIndex, frame.clone(), triggered); 
 }
