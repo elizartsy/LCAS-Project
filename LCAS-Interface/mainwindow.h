@@ -30,6 +30,9 @@ private slots:
 
     void handleEmergencyStop();
 
+    void SeedLock();
+    void SeedUnlock();
+
 
 private:
     Ui::MainWindow *ui;
