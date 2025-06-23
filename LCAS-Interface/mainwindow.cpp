@@ -55,7 +55,7 @@ MainWindow::MainWindow(QWidget* parent)
 
     adcProcess = new QProcess(this);
     adcProcess->setProgram("python3");
-    adcProcess->setArguments(QStringList() << "/home/admin/Desktop/LCAS-Interface-PSInt2/readadcsimple.py");
+    adcProcess->setArguments(QStringList() << "/home/admin/Desktop/LCAS-Project-ThermalThreading2/LCAS-Interface/readadcsimple.py");
     adcProcess->setProcessChannelMode(QProcess::MergedChannels); // Merge stdout + stderr
     connect(adcProcess, &QProcess::readyReadStandardOutput, this, &MainWindow::handleADCOutput);
     adcProcess->start();
@@ -94,22 +94,12 @@ MainWindow::MainWindow(QWidget* parent)
 
 MainWindow::~MainWindow() {
     for (int i = 0; i < 4; ++i) {
-        if (thermalWorkers[i]) {
-            QMetaObject::invokeMethod(thermalWorkers[i], "stop", Qt::BlockingQueuedConnection);
-        }
-
-        if (thermalThreads[i]) {
-            thermalThreads[i]->quit();
-            thermalThreads[i]->wait();
-        }
-
+        thermalThreads[i]->quit();
+        thermalThreads[i]->wait();
         delete thermalWorkers[i];
         delete thermalThreads[i];
     }
-
-    delete ui;
 }
-
 
 
 static QImage matToQImage(const cv::Mat& mat) {
@@ -132,7 +122,7 @@ void MainWindow::handleThermalFrame(int camIndex, const cv::Mat& frame, bool thr
         QMetaObject::invokeMethod(this, "handleEmergencyStop", Qt::QueuedConnection);
         return;
     }
-
+    /*
     static int frameCounters[4] = {0};
     frameCounters[camIndex]++;
     if (frameCounters[camIndex] % 2 != 0) return;
@@ -141,7 +131,7 @@ void MainWindow::handleThermalFrame(int camIndex, const cv::Mat& frame, bool thr
         qDebug() << "Frame is empty for cam" << camIndex;
         return;
     }
-
+    */
     QLabel* targetLabel = nullptr;
     switch (camIndex) {
         case 0: targetLabel = label_cam0; break;
