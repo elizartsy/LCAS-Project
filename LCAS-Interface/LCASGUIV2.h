@@ -1,13 +1,13 @@
 /********************************************************************************
-** Form generated from reading UI file 'LCASGUIV3pagxMF.ui'
+** Form generated from reading UI file 'LCASGUIV3BYGlMS.ui'
 **
 ** Created by: Qt User Interface Compiler version 6.9.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
 
-#ifndef LCASGUIV3PAGXMF_H
-#define LCASGUIV3PAGXMF_H
+#ifndef LCASGUIV3BYGLMS_H
+#define LCASGUIV3BYGLMS_H
 
 #include <QtCore/QVariant>
 #include <QtWidgets/QApplication>
@@ -62,6 +62,10 @@ public:
     QLabel *label_14;
     QDoubleSpinBox *doubleSpinBox_Iset_2;
     QPushButton *EStop;
+    QLabel *label_15;
+    QFrame *OutIndicatorFrame_3;
+    QPushButton *SeedLockButton;
+    QPushButton *SeedUnlockButton;
     QMenuBar *menubar;
     QStatusBar *statusbar;
 
@@ -187,76 +191,93 @@ public:
         doubleSpinBox_4->setValue(6.000000000000000);
         label_9 = new QLabel(centralwidget);
         label_9->setObjectName("label_9");
-        label_9->setGeometry(QRect(110, 20, 191, 20));
+        label_9->setGeometry(QRect(110, 110, 191, 20));
         label_9->setFont(font);
         label_9->setFrameShape(QFrame::Shape::StyledPanel);
         label_9->setAlignment(Qt::AlignmentFlag::AlignCenter);
         label_10 = new QLabel(centralwidget);
         label_10->setObjectName("label_10");
-        label_10->setGeometry(QRect(30, 50, 91, 31));
+        label_10->setGeometry(QRect(30, 140, 91, 31));
         label_10->setTextFormat(Qt::TextFormat::AutoText);
         label_10->setAlignment(Qt::AlignmentFlag::AlignCenter);
         label_11 = new QLabel(centralwidget);
         label_11->setObjectName("label_11");
-        label_11->setGeometry(QRect(30, 80, 91, 31));
+        label_11->setGeometry(QRect(30, 170, 91, 31));
         label_11->setTextFormat(Qt::TextFormat::AutoText);
         label_11->setAlignment(Qt::AlignmentFlag::AlignCenter);
         doubleSpinBox_Vset = new QDoubleSpinBox(centralwidget);
         doubleSpinBox_Vset->setObjectName("doubleSpinBox_Vset");
-        doubleSpinBox_Vset->setGeometry(QRect(110, 50, 101, 31));
+        doubleSpinBox_Vset->setGeometry(QRect(110, 140, 101, 31));
         doubleSpinBox_Vset->setValue(0.000000000000000);
         doubleSpinBox_Iset = new QDoubleSpinBox(centralwidget);
         doubleSpinBox_Iset->setObjectName("doubleSpinBox_Iset");
-        doubleSpinBox_Iset->setGeometry(QRect(110, 80, 101, 31));
+        doubleSpinBox_Iset->setGeometry(QRect(110, 170, 101, 31));
         doubleSpinBox_Iset->setValue(0.000000000000000);
         PSoutputButton = new QPushButton(centralwidget);
         PSoutputButton->setObjectName("PSoutputButton");
-        PSoutputButton->setGeometry(QRect(230, 60, 121, 41));
+        PSoutputButton->setGeometry(QRect(230, 150, 121, 41));
         OutIndicatorFrame = new QFrame(centralwidget);
         OutIndicatorFrame->setObjectName("OutIndicatorFrame");
-        OutIndicatorFrame->setGeometry(QRect(360, 70, 21, 21));
+        OutIndicatorFrame->setGeometry(QRect(360, 160, 21, 21));
         OutIndicatorFrame->setFrameShape(QFrame::Shape::StyledPanel);
         OutIndicatorFrame->setFrameShadow(QFrame::Shadow::Raised);
         doubleSpinBox_Vset_2 = new QDoubleSpinBox(centralwidget);
         doubleSpinBox_Vset_2->setObjectName("doubleSpinBox_Vset_2");
-        doubleSpinBox_Vset_2->setGeometry(QRect(110, 160, 101, 31));
+        doubleSpinBox_Vset_2->setGeometry(QRect(110, 250, 101, 31));
         doubleSpinBox_Vset_2->setValue(0.000000000000000);
         label_12 = new QLabel(centralwidget);
         label_12->setObjectName("label_12");
-        label_12->setGeometry(QRect(30, 190, 91, 31));
+        label_12->setGeometry(QRect(30, 280, 91, 31));
         label_12->setTextFormat(Qt::TextFormat::AutoText);
         label_12->setAlignment(Qt::AlignmentFlag::AlignCenter);
         label_13 = new QLabel(centralwidget);
         label_13->setObjectName("label_13");
-        label_13->setGeometry(QRect(110, 130, 191, 20));
+        label_13->setGeometry(QRect(110, 220, 191, 20));
         label_13->setFont(font);
         label_13->setFrameShape(QFrame::Shape::StyledPanel);
         label_13->setAlignment(Qt::AlignmentFlag::AlignCenter);
         PSoutputButton_2 = new QPushButton(centralwidget);
         PSoutputButton_2->setObjectName("PSoutputButton_2");
-        PSoutputButton_2->setGeometry(QRect(230, 170, 121, 41));
+        PSoutputButton_2->setGeometry(QRect(230, 260, 121, 41));
         OutIndicatorFrame_2 = new QFrame(centralwidget);
         OutIndicatorFrame_2->setObjectName("OutIndicatorFrame_2");
-        OutIndicatorFrame_2->setGeometry(QRect(360, 180, 21, 21));
+        OutIndicatorFrame_2->setGeometry(QRect(360, 270, 21, 21));
         OutIndicatorFrame_2->setFrameShape(QFrame::Shape::StyledPanel);
         OutIndicatorFrame_2->setFrameShadow(QFrame::Shadow::Raised);
         label_14 = new QLabel(centralwidget);
         label_14->setObjectName("label_14");
-        label_14->setGeometry(QRect(30, 160, 91, 31));
+        label_14->setGeometry(QRect(30, 250, 91, 31));
         label_14->setTextFormat(Qt::TextFormat::AutoText);
         label_14->setAlignment(Qt::AlignmentFlag::AlignCenter);
         doubleSpinBox_Iset_2 = new QDoubleSpinBox(centralwidget);
         doubleSpinBox_Iset_2->setObjectName("doubleSpinBox_Iset_2");
-        doubleSpinBox_Iset_2->setGeometry(QRect(110, 190, 101, 31));
+        doubleSpinBox_Iset_2->setGeometry(QRect(110, 280, 101, 31));
         doubleSpinBox_Iset_2->setValue(0.000000000000000);
         EStop = new QPushButton(centralwidget);
         EStop->setObjectName("EStop");
-        EStop->setGeometry(QRect(70, 240, 281, 61));
+        EStop->setGeometry(QRect(70, 320, 281, 61));
         QFont font1;
         font1.setFamilies({QString::fromUtf8("Arial")});
         font1.setPointSize(18);
         font1.setBold(true);
         EStop->setFont(font1);
+        label_15 = new QLabel(centralwidget);
+        label_15->setObjectName("label_15");
+        label_15->setGeometry(QRect(110, 20, 191, 20));
+        label_15->setFont(font);
+        label_15->setFrameShape(QFrame::Shape::StyledPanel);
+        label_15->setAlignment(Qt::AlignmentFlag::AlignCenter);
+        OutIndicatorFrame_3 = new QFrame(centralwidget);
+        OutIndicatorFrame_3->setObjectName("OutIndicatorFrame_3");
+        OutIndicatorFrame_3->setGeometry(QRect(340, 60, 21, 21));
+        OutIndicatorFrame_3->setFrameShape(QFrame::Shape::StyledPanel);
+        OutIndicatorFrame_3->setFrameShadow(QFrame::Shadow::Raised);
+        SeedLockButton = new QPushButton(centralwidget);
+        SeedLockButton->setObjectName("SeedLockButton");
+        SeedLockButton->setGeometry(QRect(80, 50, 121, 41));
+        SeedUnlockButton = new QPushButton(centralwidget);
+        SeedUnlockButton->setObjectName("SeedUnlockButton");
+        SeedUnlockButton->setGeometry(QRect(210, 50, 121, 41));
         MainWindow->setCentralWidget(centralwidget);
         menubar = new QMenuBar(MainWindow);
         menubar->setObjectName("menubar");
@@ -291,6 +312,9 @@ public:
         PSoutputButton_2->setText(QCoreApplication::translate("MainWindow", "Out", nullptr));
         label_14->setText(QCoreApplication::translate("MainWindow", "Set V:", nullptr));
         EStop->setText(QCoreApplication::translate("MainWindow", "EMERGENCY STOP", nullptr));
+        label_15->setText(QCoreApplication::translate("MainWindow", "Seed Power Supply", nullptr));
+        SeedLockButton->setText(QCoreApplication::translate("MainWindow", "Lock", nullptr));
+        SeedUnlockButton->setText(QCoreApplication::translate("MainWindow", "Unlock", nullptr));
     } // retranslateUi
 
 };
@@ -301,4 +325,4 @@ namespace Ui {
 
 QT_END_NAMESPACE
 
-#endif // LCASGUIV3PAGXMF_H
+#endif // LCASGUIV3BYGLMS_H

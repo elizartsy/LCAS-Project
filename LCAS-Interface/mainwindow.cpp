@@ -49,8 +49,10 @@ MainWindow::MainWindow(QWidget* parent)
     connect(ui->PSoutputButton_2, &QPushButton::clicked,
         this, &MainWindow::handleToggleOutput2);
 
-        connect(ui->EStop, &QPushButton::clicked, this, &MainWindow::handleEmergencyStop);
+    connect(ui->EStop, &QPushButton::clicked, this, &MainWindow::handleEmergencyStop);
 
+    connect(ui->SeedLockButton, &QPushButton::clicked, this, &MainWindow::SeedLock);
+    connect(ui->SeedUnlockButton, &QPushButton::clicked, this, &MainWindow::SeedUnlock);
 
 
     adcProcess = new QProcess(this);
@@ -88,7 +90,7 @@ MainWindow::MainWindow(QWidget* parent)
     
     // enable pin 12 for seed power supply control
     system("gpio -g mode 12 out");
-    system("gpio -g write 12 0");
+    system("gpio -g write 12 1");
 
 }
 
@@ -283,11 +285,22 @@ void MainWindow::handleEmergencyStop() {
 
     // SEED PS LAST
 
-    system("gpio -g write 12 1");
+    system("gpio -g write 12 0");
 
     // Update visual output indicators
     ui->OutIndicatorFrame->setStyleSheet("background-color: red; border: 1px solid black;");
     ui->OutIndicatorFrame_2->setStyleSheet("background-color: red; border: 1px solid black;");
+    ui->OutIndicatorFrame_3->setStyleSheet("background-color: red; border: 1px solid black;");
 
     qDebug() << "Emergency shutdown complete.";
+}
+
+void MainWindow::SeedLock() {
+    system("gpio -g write 12 0");
+    ui->OutIndicatorFrame_3->setStyleSheet("background-color: red; border: 1px solid black;");
+}
+
+void MainWindow::SeedUnlock() {
+    system("gpio -g write 12 1");
+    ui->OutIndicatorFrame_3->setStyleSheet("background-color: green; border: 1px solid black;");
 }
