@@ -84,7 +84,7 @@
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>420</x>
+      <x>330</x>
       <y>470</y>
       <width>91</width>
       <height>31</height>
@@ -149,7 +149,7 @@
    <widget class="QLCDNumber" name="lcdNumber">
     <property name="geometry">
      <rect>
-      <x>520</x>
+      <x>430</x>
       <y>470</y>
       <width>111</width>
       <height>31</height>
@@ -174,7 +174,7 @@
    <widget class="QLabel" name="label_2">
     <property name="geometry">
      <rect>
-      <x>420</x>
+      <x>330</x>
       <y>510</y>
       <width>91</width>
       <height>31</height>
@@ -193,7 +193,7 @@
    <widget class="QLabel" name="label_3">
     <property name="geometry">
      <rect>
-      <x>420</x>
+      <x>330</x>
       <y>550</y>
       <width>91</width>
       <height>31</height>
@@ -212,7 +212,7 @@
    <widget class="QLabel" name="label_4">
     <property name="geometry">
      <rect>
-      <x>420</x>
+      <x>330</x>
       <y>590</y>
       <width>91</width>
       <height>31</height>
@@ -231,7 +231,7 @@
    <widget class="QLCDNumber" name="lcdNumber_2">
     <property name="geometry">
      <rect>
-      <x>520</x>
+      <x>430</x>
       <y>510</y>
       <width>111</width>
       <height>31</height>
@@ -256,7 +256,7 @@
    <widget class="QLCDNumber" name="lcdNumber_3">
     <property name="geometry">
      <rect>
-      <x>520</x>
+      <x>430</x>
       <y>550</y>
       <width>111</width>
       <height>31</height>
@@ -281,7 +281,7 @@
    <widget class="QLCDNumber" name="lcdNumber_4">
     <property name="geometry">
      <rect>
-      <x>520</x>
+      <x>430</x>
       <y>590</y>
       <width>111</width>
       <height>31</height>
@@ -306,7 +306,7 @@
    <widget class="QLabel" name="label_5">
     <property name="geometry">
      <rect>
-      <x>540</x>
+      <x>450</x>
       <y>440</y>
       <width>71</width>
       <height>20</height>
@@ -325,7 +325,7 @@
    <widget class="QLabel" name="label_8">
     <property name="geometry">
      <rect>
-      <x>650</x>
+      <x>560</x>
       <y>440</y>
       <width>121</width>
       <height>20</height>
@@ -344,11 +344,14 @@
    <widget class="QDoubleSpinBox" name="doubleSpinBox">
     <property name="geometry">
      <rect>
-      <x>660</x>
+      <x>570</x>
       <y>470</y>
       <width>101</width>
       <height>31</height>
      </rect>
+    </property>
+    <property name="decimals">
+     <number>6</number>
     </property>
     <property name="value">
      <double>6.000000000000000</double>
@@ -357,11 +360,14 @@
    <widget class="QDoubleSpinBox" name="doubleSpinBox_2">
     <property name="geometry">
      <rect>
-      <x>660</x>
+      <x>570</x>
       <y>510</y>
       <width>101</width>
       <height>31</height>
      </rect>
+    </property>
+    <property name="decimals">
+     <number>6</number>
     </property>
     <property name="value">
      <double>6.000000000000000</double>
@@ -370,11 +376,14 @@
    <widget class="QDoubleSpinBox" name="doubleSpinBox_3">
     <property name="geometry">
      <rect>
-      <x>660</x>
+      <x>570</x>
       <y>550</y>
       <width>101</width>
       <height>31</height>
      </rect>
+    </property>
+    <property name="decimals">
+     <number>6</number>
     </property>
     <property name="value">
      <double>6.000000000000000</double>
@@ -383,11 +392,14 @@
    <widget class="QDoubleSpinBox" name="doubleSpinBox_4">
     <property name="geometry">
      <rect>
-      <x>660</x>
+      <x>570</x>
       <y>590</y>
       <width>101</width>
       <height>31</height>
      </rect>
+    </property>
+    <property name="decimals">
+     <number>6</number>
     </property>
     <property name="value">
      <double>6.000000000000000</double>
@@ -711,6 +723,42 @@
     </property>
     <property name="text">
      <string>Unlock</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="powerShutdownTriggerReset">
+    <property name="geometry">
+     <rect>
+      <x>690</x>
+      <y>520</y>
+      <width>81</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>8</pointsize>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Trigger Reset</string>
+    </property>
+   </widget>
+   <widget class="QFrame" name="TriggerIndicator">
+    <property name="geometry">
+     <rect>
+      <x>720</x>
+      <y>490</y>
+      <width>21</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::Shape::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Shadow::Raised</enum>
     </property>
    </widget>
   </widget>

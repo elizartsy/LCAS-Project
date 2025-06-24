@@ -54,6 +54,7 @@ MainWindow::MainWindow(QWidget* parent)
     connect(ui->SeedLockButton, &QPushButton::clicked, this, &MainWindow::SeedLock);
     connect(ui->SeedUnlockButton, &QPushButton::clicked, this, &MainWindow::SeedUnlock);
 
+    connect(ui->powerShutdownTriggerReset, &QPushButton::clicked, this, &MainWindow::powerShutdownTriggerReset);
 
     adcProcess = new QProcess(this);
     adcProcess->setProgram("python3");
@@ -119,7 +120,7 @@ void MainWindow::handleThermalFrame(int camIndex, const cv::Mat& frame, bool thr
     //qDebug() << "handleThermalFrame called for cam" << camIndex;
 
     if (thresholdExceeded && !powerShutdownTriggered) {
-        powerShutdownTriggered = true;
+        //powerShutdownTriggered = true;
         //qDebug() << "Thermal threshold exceeded on camera" << camIndex << " — triggering emergency stop.";
         QMetaObject::invokeMethod(this, "handleEmergencyStop", Qt::QueuedConnection);
         return;
@@ -191,7 +192,7 @@ void MainWindow::handleADCOutput() {
 
                 if (val[i] > threshold && !powerShutdownTriggered) {
                     powerShutdownTriggered = true;
-
+                    ui->TriggerIndicator->setStyleSheet("background-color: red; border: 1px solid black;");
                     qDebug() << QString("ADC channel %1 exceeded threshold (%2 > %3). Triggering emergency stop.")
                                 .arg(i).arg(val[i]).arg(threshold);
                     handleEmergencyStop();
@@ -303,4 +304,9 @@ void MainWindow::SeedLock() {
 void MainWindow::SeedUnlock() {
     system("gpio -g write 12 1");
     ui->OutIndicatorFrame_3->setStyleSheet("background-color: green; border: 1px solid black;");
+}
+
+void MainWindow::powerShutdownTriggerReset() {
+    powerShutdownTriggered = false;
+    ui->TriggerIndicator->setStyleSheet("background-color: green; border: 1px solid black;");
 }
