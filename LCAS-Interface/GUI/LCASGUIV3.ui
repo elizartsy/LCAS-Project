@@ -725,12 +725,28 @@
     <property name="font">
      <font>
       <family>Arial</family>
-      <pointsize>10</pointsize>
+      <pointsize>8</pointsize>
       <bold>true</bold>
      </font>
     </property>
     <property name="text">
      <string>Trigger Reset</string>
+    </property>
+   </widget>
+   <widget class="QFrame" name="TriggerIndicator">
+    <property name="geometry">
+     <rect>
+      <x>720</x>
+      <y>490</y>
+      <width>21</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::Shape::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Shadow::Raised</enum>
     </property>
    </widget>
   </widget>

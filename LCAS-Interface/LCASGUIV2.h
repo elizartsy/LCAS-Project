@@ -1,13 +1,13 @@
 /********************************************************************************
-** Form generated from reading UI file 'LCASGUIV3mnXdLO.ui'
+** Form generated from reading UI file 'LCASGUIV3ObnAsl.ui'
 **
 ** Created by: Qt User Interface Compiler version 6.9.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
 
-#ifndef LCASGUIV3MNXDLO_H
-#define LCASGUIV3MNXDLO_H
+#ifndef LCASGUIV3OBNASL_H
+#define LCASGUIV3OBNASL_H
 
 #include <QtCore/QVariant>
 #include <QtWidgets/QApplication>
@@ -67,6 +67,7 @@ public:
     QPushButton *SeedLockButton;
     QPushButton *SeedUnlockButton;
     QPushButton *powerShutdownTriggerReset;
+    QFrame *TriggerIndicator;
     QMenuBar *menubar;
     QStatusBar *statusbar;
 
@@ -284,9 +285,14 @@ public:
         powerShutdownTriggerReset->setGeometry(QRect(690, 520, 81, 41));
         QFont font2;
         font2.setFamilies({QString::fromUtf8("Arial")});
-        font2.setPointSize(10);
+        font2.setPointSize(8);
         font2.setBold(true);
         powerShutdownTriggerReset->setFont(font2);
+        TriggerIndicator = new QFrame(centralwidget);
+        TriggerIndicator->setObjectName("TriggerIndicator");
+        TriggerIndicator->setGeometry(QRect(720, 490, 21, 21));
+        TriggerIndicator->setFrameShape(QFrame::Shape::StyledPanel);
+        TriggerIndicator->setFrameShadow(QFrame::Shadow::Raised);
         MainWindow->setCentralWidget(centralwidget);
         menubar = new QMenuBar(MainWindow);
         menubar->setObjectName("menubar");
@@ -335,4 +341,4 @@ namespace Ui {
 
 QT_END_NAMESPACE
 
-#endif // LCASGUIV3MNXDLO_H
+#endif // LCASGUIV3OBNASL_H

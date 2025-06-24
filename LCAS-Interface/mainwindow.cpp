@@ -192,7 +192,7 @@ void MainWindow::handleADCOutput() {
 
                 if (val[i] > threshold && !powerShutdownTriggered) {
                     powerShutdownTriggered = true;
-
+                    ui->TriggerIndicator->setStyleSheet("background-color: red; border: 1px solid black;");
                     qDebug() << QString("ADC channel %1 exceeded threshold (%2 > %3). Triggering emergency stop.")
                                 .arg(i).arg(val[i]).arg(threshold);
                     handleEmergencyStop();
@@ -308,4 +308,5 @@ void MainWindow::SeedUnlock() {
 
 void MainWindow::powerShutdownTriggerReset() {
     powerShutdownTriggered = false;
+    ui->TriggerIndicator->setStyleSheet("background-color: green; border: 1px solid black;");
 }
