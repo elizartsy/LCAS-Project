@@ -33,6 +33,7 @@ private slots:
     void SeedLock();
     void SeedUnlock();
 
+    void powerShutdownTriggerReset();
 
 private:
     Ui::MainWindow *ui;
