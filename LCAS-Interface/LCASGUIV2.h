@@ -1,13 +1,13 @@
 /********************************************************************************
-** Form generated from reading UI file 'LCASGUIV3ObnAsl.ui'
+** Form generated from reading UI file 'LCASGUIV3MVuAqY.ui'
 **
 ** Created by: Qt User Interface Compiler version 6.9.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
 
-#ifndef LCASGUIV3OBNASL_H
-#define LCASGUIV3OBNASL_H
+#ifndef LCASGUIV3MVUAQY_H
+#define LCASGUIV3MVUAQY_H
 
 #include <QtCore/QVariant>
 #include <QtWidgets/QApplication>
@@ -178,18 +178,22 @@ public:
         doubleSpinBox = new QDoubleSpinBox(centralwidget);
         doubleSpinBox->setObjectName("doubleSpinBox");
         doubleSpinBox->setGeometry(QRect(570, 470, 101, 31));
+        doubleSpinBox->setDecimals(6);
         doubleSpinBox->setValue(6.000000000000000);
         doubleSpinBox_2 = new QDoubleSpinBox(centralwidget);
         doubleSpinBox_2->setObjectName("doubleSpinBox_2");
         doubleSpinBox_2->setGeometry(QRect(570, 510, 101, 31));
+        doubleSpinBox_2->setDecimals(6);
         doubleSpinBox_2->setValue(6.000000000000000);
         doubleSpinBox_3 = new QDoubleSpinBox(centralwidget);
         doubleSpinBox_3->setObjectName("doubleSpinBox_3");
         doubleSpinBox_3->setGeometry(QRect(570, 550, 101, 31));
+        doubleSpinBox_3->setDecimals(6);
         doubleSpinBox_3->setValue(6.000000000000000);
         doubleSpinBox_4 = new QDoubleSpinBox(centralwidget);
         doubleSpinBox_4->setObjectName("doubleSpinBox_4");
         doubleSpinBox_4->setGeometry(QRect(570, 590, 101, 31));
+        doubleSpinBox_4->setDecimals(6);
         doubleSpinBox_4->setValue(6.000000000000000);
         label_9 = new QLabel(centralwidget);
         label_9->setObjectName("label_9");
@@ -341,4 +345,4 @@ namespace Ui {
 
 QT_END_NAMESPACE
 
-#endif // LCASGUIV3OBNASL_H
+#endif // LCASGUIV3MVUAQY_H

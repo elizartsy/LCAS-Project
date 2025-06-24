@@ -350,6 +350,9 @@
       <height>31</height>
      </rect>
     </property>
+    <property name="decimals">
+     <number>6</number>
+    </property>
     <property name="value">
      <double>6.000000000000000</double>
     </property>
@@ -362,6 +365,9 @@
       <width>101</width>
       <height>31</height>
      </rect>
+    </property>
+    <property name="decimals">
+     <number>6</number>
     </property>
     <property name="value">
      <double>6.000000000000000</double>
@@ -376,6 +382,9 @@
       <height>31</height>
      </rect>
     </property>
+    <property name="decimals">
+     <number>6</number>
+    </property>
     <property name="value">
      <double>6.000000000000000</double>
     </property>
@@ -388,6 +397,9 @@
       <width>101</width>
       <height>31</height>
      </rect>
+    </property>
+    <property name="decimals">
+     <number>6</number>
     </property>
     <property name="value">
      <double>6.000000000000000</double>
