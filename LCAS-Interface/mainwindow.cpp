@@ -32,8 +32,9 @@ MainWindow::MainWindow(QWidget* parent)
 
     thermalThreads[i]->start();
     }
-
-
+    
+    connect(ui->doubleSpinBox_TempSet, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+        this, &ThermalCameraManager::tempThresChange);
         
     connect(ui->doubleSpinBox_Vset, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
         this, &MainWindow::handleVoltageChanged);
@@ -58,7 +59,7 @@ MainWindow::MainWindow(QWidget* parent)
 
     adcProcess = new QProcess(this);
     adcProcess->setProgram("python3");
-    adcProcess->setArguments(QStringList() << "/home/admin/Desktop/LCAS-Project-main/LCAS-Interface/readadcsimple.py");
+    adcProcess->setArguments(QStringList() << "/home/admin/Desktop/LCAS-Project-ThermalThreading2/LCAS-Interface/readadcsimple.py");
     adcProcess->setProcessChannelMode(QProcess::MergedChannels); // Merge stdout + stderr
     connect(adcProcess, &QProcess::readyReadStandardOutput, this, &MainWindow::handleADCOutput);
     adcProcess->start();

@@ -157,3 +157,7 @@ bool ThermalCameraManager::checkAndSaveIfThresholdExceeded(int camIndex, const c
     }
     return false;
 }
+
+void ThermalCameraManager::tempThresChange(double tempChange) {
+    TEMP_THRESHOLD = tempChange;
+}

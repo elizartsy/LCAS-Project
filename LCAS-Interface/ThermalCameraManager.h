@@ -14,7 +14,7 @@ public:
     cv::Mat getThermalFrame(int camIndex);
     bool checkAndSaveIfThresholdExceeded(int camIndex, const cv::Mat& displayImage);
     
-    static constexpr double TEMP_THRESHOLD = 40.0;
+    static double TEMP_THRESHOLD = 40.0;
     static constexpr int N_ROW = 32;
     static constexpr int N_PIXEL = N_ROW * N_ROW;
     static constexpr int N_READ = (N_PIXEL + 1) * 2 + 1;
@@ -32,6 +32,7 @@ private:
     void resetMux();
     void selectMuxChannel(int channel);
     void initialSetting();
+    void tempThresChange(double tempChange);
     cv::Mat fetchImage();
 
     double ptat;
