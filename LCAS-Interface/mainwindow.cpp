@@ -34,7 +34,7 @@ MainWindow::MainWindow(QWidget* parent)
     }
     
     connect(ui->doubleSpinBox_TempSet, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
-        this, [](double val) {
+        this, [this](double val) {
             thermalManager.setThreshold(val);
             qDebug() << "Temperature threshold set to" << val;
         });
