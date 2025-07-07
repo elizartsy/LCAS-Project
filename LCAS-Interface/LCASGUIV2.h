@@ -1,13 +1,13 @@
 /********************************************************************************
-** Form generated from reading UI file 'LCASGUIV3QLQvWf.ui'
+** Form generated from reading UI file 'LCASGUIV3PWKASr.ui'
 **
 ** Created by: Qt User Interface Compiler version 6.9.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
 
-#ifndef LCASGUIV3QLQVWF_H
-#define LCASGUIV3QLQVWF_H
+#ifndef LCASGUIV3PWKASR_H
+#define LCASGUIV3PWKASR_H
 
 #include <QtCore/QVariant>
 #include <QtWidgets/QApplication>
@@ -302,7 +302,7 @@ public:
         TriggerIndicator->setFrameShadow(QFrame::Shadow::Raised);
         label_16 = new QLabel(centralwidget);
         label_16->setObjectName("label_16");
-        label_16->setGeometry(QRect(430, 390, 201, 31));
+        label_16->setGeometry(QRect(410, 390, 201, 31));
         label_16->setTextFormat(Qt::TextFormat::AutoText);
         label_16->setAlignment(Qt::AlignmentFlag::AlignCenter);
         doubleSpinBox_TempSet = new QDoubleSpinBox(centralwidget);
@@ -311,7 +311,7 @@ public:
         doubleSpinBox_TempSet->setValue(0.000000000000000);
         label_17 = new QLabel(centralwidget);
         label_17->setObjectName("label_17");
-        label_17->setGeometry(QRect(730, 390, 21, 31));
+        label_17->setGeometry(QRect(740, 390, 21, 31));
         QFont font3;
         font3.setPointSize(18);
         label_17->setFont(font3);
@@ -367,4 +367,4 @@ namespace Ui {
 
 QT_END_NAMESPACE
 
-#endif // LCASGUIV3QLQVWF_H
+#endif // LCASGUIV3PWKASR_H
