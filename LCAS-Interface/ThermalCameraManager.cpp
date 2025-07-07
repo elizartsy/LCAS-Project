@@ -143,7 +143,7 @@ cv::Mat ThermalCameraManager::getThermalFrame(int camIndex) {
 
 bool ThermalCameraManager::checkAndSaveIfThresholdExceeded(int camIndex, const cv::Mat& displayImage) {
     for (int i = 0; i < N_PIXEL; i++) {
-        if (pixelData[i] > TEMP_THRESHOLD) {
+        if (pixelData[i] > tempThreshold) {
             time_t now = time(0);
             struct tm* t = localtime(&now);
             char filename[256];
@@ -158,6 +158,11 @@ bool ThermalCameraManager::checkAndSaveIfThresholdExceeded(int camIndex, const c
     return false;
 }
 
-void ThermalCameraManager::tempThresChange(double tempChange) {
-    TEMP_THRESHOLD = tempChange;
+void ThermalCameraManager::setThreshold(double value) {
+    QMutexLocker locker(&mutex);
+    tempThreshold = value;
+}
+
+double ThermalCameraManager::getThreshold() const {
+    return tempThreshold;
 }
