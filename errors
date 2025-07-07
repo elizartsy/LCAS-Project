@@ -1,68 +1,10 @@
-QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
-ThermalWorker::start() called for cam 0
-ThermalWorker::start() called for cam 2
-ThermalWorker::start() called for cam 3
-Timer started in thread: QThread(0x5556662b3aa0)
-Timer started in thread: QThread(0x5556662b3210)
-ThermalWorker::start() called for cam 1
-Timer started in thread: QThread(0x5556662b3a00)
-Timer started in thread: QThread(0x5556662b3230)
-Power serial port opened successfully.
-ThermalWorker emitting frameReady for cam 2 , triggered = false
-handleThermalFrame called for cam 2
-ThermalWorker emitting frameReady for cam 1 , triggered = false
-handleThermalFrame called for cam 1
-ThermalWorker emitting frameReady for cam 0 , triggered = false
-handleThermalFrame called for cam 0
-ThermalWorker emitting frameReady for cam 3 , triggered = false
-handleThermalFrame called for cam 3
-ThermalWorker emitting frameReady for cam 2 , triggered = false
-handleThermalFrame called for cam 2
-ThermalWorker emitting frameReady for cam 1 , triggered = false
-handleThermalFrame called for cam 1
-ThermalWorker emitting frameReady for cam 0 , triggered = false
-handleThermalFrame called for cam 0
-ThermalWorker emitting frameReady for cam 3 , triggered = false
-handleThermalFrame called for cam 3
-ThermalWorker emitting frameReady for cam 2 , triggered = false
-handleThermalFrame called for cam 2
-ThermalWorker emitting frameReady for cam 1 , triggered = false
-handleThermalFrame called for cam 1
-ThermalWorker emitting frameReady for cam 0 , triggered = false
-handleThermalFrame called for cam 0
-ThermalWorker emitting frameReady for cam 3 , triggered = false
-handleThermalFrame called for cam 3
-ThermalWorker emitting frameReady for cam 2 , triggered = false
-handleThermalFrame called for cam 2
-ThermalWorker emitting frameReady for cam 1 , triggered = false
-handleThermalFrame called for cam 1
-ThermalWorker emitting frameReady for cam 0 , triggered = false
-handleThermalFrame called for cam 0
-ThermalWorker emitting frameReady for cam 3 , triggered = false
-handleThermalFrame called for cam 3
-ThermalWorker emitting frameReady for cam 2 , triggered = false
-handleThermalFrame called for cam 2
-ThermalWorker emitting frameReady for cam 1 , triggered = false
-handleThermalFrame called for cam 1
-ThermalWorker emitting frameReady for cam 0 , triggered = false
-handleThermalFrame called for cam 0
-ThermalWorker emitting frameReady for cam 3 , triggered = false
-handleThermalFrame called for cam 3
-ThermalWorker emitting frameReady for cam 2 , triggered = false
-handleThermalFrame called for cam 2
-ThermalWorker emitting frameReady for cam 1 , triggered = false
-handleThermalFrame called for cam 1
-ThermalWorker emitting frameReady for cam 0 , triggered = false
-handleThermalFrame called for cam 0
-ThermalWorker emitting frameReady for cam 3 , triggered = false
-handleThermalFrame called for cam 3
-ThermalWorker emitting frameReady for cam 2 , triggered = false
-handleThermalFrame called for cam 2
-ThermalWorker emitting frameReady for cam 1 , triggered = false
-handleThermalFrame called for cam 1
-ThermalWorker emitting frameReady for cam 0 , triggered = false
-handleThermalFrame called for cam 0
-ThermalWorker emitting frameReady for cam 3 , triggered = false
-handleThermalFrame called for cam 3
-ThermalWorker emitting frameReady for cam 2 , triggered = false
-handleThermalFrame called for cam 2
+mainwindow.cpp: In lambda function:
+mainwindow.cpp:38:13: error: ‘this’ was not captured for this lambda function
+   38 |             thermalManager.setThreshold(val);
+      |             ^~~~~~~~~~~~~~
+mainwindow.cpp:38:13: error: invalid use of non-static data member ‘MainWindow::thermalManager’
+In file included from mainwindow.cpp:1:
+mainwindow.h:41:26: note: declared here
+   41 |     ThermalCameraManager thermalManager;
+      |                          ^~~~~~~~~~~~~~
+make: *** [makefile:37: mainwindow.o] Error 1
