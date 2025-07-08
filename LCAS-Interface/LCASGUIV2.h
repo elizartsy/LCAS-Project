@@ -1,13 +1,13 @@
 /********************************************************************************
-** Form generated from reading UI file 'LCASGUIV3UlvqOX.ui'
+** Form generated from reading UI file 'LCASGUIV3VjwvCV.ui'
 **
 ** Created by: Qt User Interface Compiler version 6.9.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
 
-#ifndef LCASGUIV3ULVQOX_H
-#define LCASGUIV3ULVQOX_H
+#ifndef LCASGUIV3VJWVCV_H
+#define LCASGUIV3VJWVCV_H
 
 #include <QtCore/QVariant>
 #include <QtWidgets/QApplication>
@@ -363,7 +363,7 @@ public:
 
     void retranslateUi(QMainWindow *MainWindow)
     {
-        MainWindow->setWindowTitle(QCoreApplication::translate("MainWindow", "MainWindow", nullptr));
+        MainWindow->setWindowTitle(QCoreApplication::translate("MainWindow", "Laser Combustability Avoidance System (LCAS)", nullptr));
         label->setText(QCoreApplication::translate("MainWindow", "Channel 1:", nullptr));
         label_6->setText(QCoreApplication::translate("MainWindow", "Stray Light Sensors", nullptr));
         label_7->setText(QCoreApplication::translate("MainWindow", "Thermal Camera Outputs", nullptr));
@@ -400,4 +400,4 @@ namespace Ui {
 
 QT_END_NAMESPACE
 
-#endif // LCASGUIV3ULVQOX_H
+#endif // LCASGUIV3VJWVCV_H
