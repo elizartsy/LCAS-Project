@@ -68,7 +68,7 @@ MainWindow::MainWindow(QWidget* parent)
 
     adcProcess = new QProcess(this);
     adcProcess->setProgram("python3");
-    adcProcess->setArguments(QStringList() << "/home/admin/Desktop/LCAS-Project-ThermalThreading2/LCAS-Interface/readadcsimple.py");
+    adcProcess->setArguments(QStringList() << "/home/admin/Desktop/LCAS-Project-main/LCAS-Interface/readadcsimple.py");
     adcProcess->setProcessChannelMode(QProcess::MergedChannels); // Merge stdout + stderr
     connect(adcProcess, &QProcess::readyReadStandardOutput, this, &MainWindow::handleADCOutput);
     adcProcess->start();
@@ -101,7 +101,7 @@ MainWindow::MainWindow(QWidget* parent)
     
     // enable pin 12 for seed power supply control
     system("gpio -g mode 12 out");
-    system("gpio -g write 12 1");
+    system("gpio -g write 12 0");
 
 }
 
@@ -296,7 +296,7 @@ void MainWindow::handleEmergencyStop() {
 
     // SEED PS LAST
 
-    system("gpio -g write 12 0");
+    system("gpio -g write 12 1");
 
     // Update visual output indicators
     ui->OutIndicatorFrame->setStyleSheet("background-color: red; border: 1px solid black;");
@@ -307,12 +307,12 @@ void MainWindow::handleEmergencyStop() {
 }
 
 void MainWindow::SeedLock() {
-    system("gpio -g write 12 0");
+    system("gpio -g write 12 1");
     ui->OutIndicatorFrame_3->setStyleSheet("background-color: red; border: 1px solid black;");
 }
 
 void MainWindow::SeedUnlock() {
-    system("gpio -g write 12 1");
+    system("gpio -g write 12 0");
     ui->OutIndicatorFrame_3->setStyleSheet("background-color: green; border: 1px solid black;");
 }
 
