@@ -15,6 +15,11 @@ MainWindow::MainWindow(QWidget* parent)
     ui->setupUi(this);
     thermalManager.initialize();
 
+    double initialThreshold = thermalManager.getThreshold();
+    ui->doubleSpinBox_TempSet->setValue(initialThreshold);
+    ui->lcdNumber_temp->display(initialThreshold);
+
+
     for (int i = 0; i < 4; ++i) {
     thermalThreads[i] = new QThread(this);
     thermalWorkers[i] = new ThermalWorker(i);
@@ -36,6 +41,7 @@ MainWindow::MainWindow(QWidget* parent)
     connect(ui->doubleSpinBox_TempSet, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
         this, [this](double val) {
             thermalManager.setThreshold(val);
+            ui->lcdNumber_temp->display(val);
             qDebug() << "Temperature threshold set to" << val;
         });
         
