@@ -1,13 +1,13 @@
 /********************************************************************************
-** Form generated from reading UI file 'LCASGUIV3ViDcdP.ui'
+** Form generated from reading UI file 'LCASGUIV3UlvqOX.ui'
 **
 ** Created by: Qt User Interface Compiler version 6.9.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
 
-#ifndef LCASGUIV3VIDCDP_H
-#define LCASGUIV3VIDCDP_H
+#ifndef LCASGUIV3ULVQOX_H
+#define LCASGUIV3ULVQOX_H
 
 #include <QtCore/QVariant>
 #include <QtWidgets/QApplication>
@@ -108,12 +108,12 @@ public:
         frame_4->setLineWidth(1);
         label = new QLabel(centralwidget);
         label->setObjectName("label");
-        label->setGeometry(QRect(10, 470, 91, 31));
+        label->setGeometry(QRect(10, 470, 81, 31));
         label->setTextFormat(Qt::TextFormat::AutoText);
         label->setAlignment(Qt::AlignmentFlag::AlignCenter);
         label_6 = new QLabel(centralwidget);
         label_6->setObjectName("label_6");
-        label_6->setGeometry(QRect(200, 410, 151, 20));
+        label_6->setGeometry(QRect(110, 410, 191, 20));
         label_6->setFrameShape(QFrame::Shape::StyledPanel);
         label_6->setScaledContents(true);
         label_6->setAlignment(Qt::AlignmentFlag::AlignCenter);
@@ -127,7 +127,7 @@ public:
         label_7->setAlignment(Qt::AlignmentFlag::AlignCenter);
         lcdNumber = new QLCDNumber(centralwidget);
         lcdNumber->setObjectName("lcdNumber");
-        lcdNumber->setGeometry(QRect(110, 470, 111, 31));
+        lcdNumber->setGeometry(QRect(90, 470, 111, 31));
         lcdNumber->setFrameShape(QFrame::Shape::Box);
         lcdNumber->setDigitCount(9);
         lcdNumber->setSegmentStyle(QLCDNumber::SegmentStyle::Flat);
@@ -135,22 +135,22 @@ public:
         lcdNumber->setProperty("intValue", QVariant(1));
         label_2 = new QLabel(centralwidget);
         label_2->setObjectName("label_2");
-        label_2->setGeometry(QRect(10, 510, 91, 31));
+        label_2->setGeometry(QRect(10, 510, 81, 31));
         label_2->setTextFormat(Qt::TextFormat::AutoText);
         label_2->setAlignment(Qt::AlignmentFlag::AlignCenter);
         label_3 = new QLabel(centralwidget);
         label_3->setObjectName("label_3");
-        label_3->setGeometry(QRect(10, 550, 91, 31));
+        label_3->setGeometry(QRect(10, 550, 81, 31));
         label_3->setTextFormat(Qt::TextFormat::AutoText);
         label_3->setAlignment(Qt::AlignmentFlag::AlignCenter);
         label_4 = new QLabel(centralwidget);
         label_4->setObjectName("label_4");
-        label_4->setGeometry(QRect(10, 590, 91, 31));
+        label_4->setGeometry(QRect(10, 590, 81, 31));
         label_4->setTextFormat(Qt::TextFormat::AutoText);
         label_4->setAlignment(Qt::AlignmentFlag::AlignCenter);
         lcdNumber_2 = new QLCDNumber(centralwidget);
         lcdNumber_2->setObjectName("lcdNumber_2");
-        lcdNumber_2->setGeometry(QRect(110, 510, 111, 31));
+        lcdNumber_2->setGeometry(QRect(90, 510, 111, 31));
         lcdNumber_2->setFrameShape(QFrame::Shape::Box);
         lcdNumber_2->setDigitCount(9);
         lcdNumber_2->setSegmentStyle(QLCDNumber::SegmentStyle::Flat);
@@ -158,7 +158,7 @@ public:
         lcdNumber_2->setProperty("intValue", QVariant(1));
         lcdNumber_3 = new QLCDNumber(centralwidget);
         lcdNumber_3->setObjectName("lcdNumber_3");
-        lcdNumber_3->setGeometry(QRect(110, 550, 111, 31));
+        lcdNumber_3->setGeometry(QRect(90, 550, 111, 31));
         lcdNumber_3->setFrameShape(QFrame::Shape::Box);
         lcdNumber_3->setDigitCount(9);
         lcdNumber_3->setSegmentStyle(QLCDNumber::SegmentStyle::Flat);
@@ -166,7 +166,7 @@ public:
         lcdNumber_3->setProperty("intValue", QVariant(1));
         lcdNumber_4 = new QLCDNumber(centralwidget);
         lcdNumber_4->setObjectName("lcdNumber_4");
-        lcdNumber_4->setGeometry(QRect(110, 590, 111, 31));
+        lcdNumber_4->setGeometry(QRect(90, 590, 111, 31));
         lcdNumber_4->setFrameShape(QFrame::Shape::Box);
         lcdNumber_4->setDigitCount(9);
         lcdNumber_4->setSegmentStyle(QLCDNumber::SegmentStyle::Flat);
@@ -174,32 +174,32 @@ public:
         lcdNumber_4->setProperty("intValue", QVariant(1));
         label_5 = new QLabel(centralwidget);
         label_5->setObjectName("label_5");
-        label_5->setGeometry(QRect(130, 440, 71, 20));
+        label_5->setGeometry(QRect(110, 440, 71, 20));
         label_5->setFrameShape(QFrame::Shape::NoFrame);
         label_5->setAlignment(Qt::AlignmentFlag::AlignCenter);
         label_8 = new QLabel(centralwidget);
         label_8->setObjectName("label_8");
-        label_8->setGeometry(QRect(240, 440, 121, 20));
+        label_8->setGeometry(QRect(200, 440, 121, 20));
         label_8->setFrameShape(QFrame::Shape::NoFrame);
         label_8->setAlignment(Qt::AlignmentFlag::AlignCenter);
         doubleSpinBox = new QDoubleSpinBox(centralwidget);
         doubleSpinBox->setObjectName("doubleSpinBox");
-        doubleSpinBox->setGeometry(QRect(250, 470, 101, 31));
+        doubleSpinBox->setGeometry(QRect(210, 470, 101, 31));
         doubleSpinBox->setDecimals(6);
         doubleSpinBox->setValue(6.000000000000000);
         doubleSpinBox_2 = new QDoubleSpinBox(centralwidget);
         doubleSpinBox_2->setObjectName("doubleSpinBox_2");
-        doubleSpinBox_2->setGeometry(QRect(250, 510, 101, 31));
+        doubleSpinBox_2->setGeometry(QRect(210, 510, 101, 31));
         doubleSpinBox_2->setDecimals(6);
         doubleSpinBox_2->setValue(6.000000000000000);
         doubleSpinBox_3 = new QDoubleSpinBox(centralwidget);
         doubleSpinBox_3->setObjectName("doubleSpinBox_3");
-        doubleSpinBox_3->setGeometry(QRect(250, 550, 101, 31));
+        doubleSpinBox_3->setGeometry(QRect(210, 550, 101, 31));
         doubleSpinBox_3->setDecimals(6);
         doubleSpinBox_3->setValue(6.000000000000000);
         doubleSpinBox_4 = new QDoubleSpinBox(centralwidget);
         doubleSpinBox_4->setObjectName("doubleSpinBox_4");
-        doubleSpinBox_4->setGeometry(QRect(250, 590, 101, 31));
+        doubleSpinBox_4->setGeometry(QRect(210, 590, 101, 31));
         doubleSpinBox_4->setDecimals(6);
         doubleSpinBox_4->setValue(6.000000000000000);
         label_9 = new QLabel(centralwidget);
@@ -293,7 +293,7 @@ public:
         SeedUnlockButton->setGeometry(QRect(210, 50, 121, 41));
         powerShutdownTriggerReset = new QPushButton(centralwidget);
         powerShutdownTriggerReset->setObjectName("powerShutdownTriggerReset");
-        powerShutdownTriggerReset->setGeometry(QRect(370, 570, 81, 41));
+        powerShutdownTriggerReset->setGeometry(QRect(330, 540, 81, 41));
         QFont font2;
         font2.setFamilies({QString::fromUtf8("Arial")});
         font2.setPointSize(8);
@@ -301,7 +301,7 @@ public:
         powerShutdownTriggerReset->setFont(font2);
         TriggerIndicator = new QFrame(centralwidget);
         TriggerIndicator->setObjectName("TriggerIndicator");
-        TriggerIndicator->setGeometry(QRect(400, 540, 21, 21));
+        TriggerIndicator->setGeometry(QRect(360, 510, 21, 21));
         TriggerIndicator->setFrameShape(QFrame::Shape::StyledPanel);
         TriggerIndicator->setFrameShadow(QFrame::Shadow::Raised);
         label_16 = new QLabel(centralwidget);
@@ -400,4 +400,4 @@ namespace Ui {
 
 QT_END_NAMESPACE
 
-#endif // LCASGUIV3VIDCDP_H
+#endif // LCASGUIV3ULVQOX_H
