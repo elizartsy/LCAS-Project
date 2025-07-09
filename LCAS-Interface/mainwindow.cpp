@@ -10,6 +10,8 @@
 #include <opencv2/imgcodecs.hpp>
 #include <stdlib.h>
 
+extern ThermalCameraManager thermalManager;
+
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), updateTimer(new QTimer(this)) {
     ui->setupUi(this);

@@ -337,7 +337,7 @@ public:
         lcdNumber_temp->setObjectName("lcdNumber_temp");
         lcdNumber_temp->setGeometry(QRect(620, 430, 91, 31));
         lcdNumber_temp->setFrameShape(QFrame::Shape::Box);
-        lcdNumber_temp->setDigitCount(2);
+        lcdNumber_temp->setDigitCount(4);
         lcdNumber_temp->setSegmentStyle(QLCDNumber::SegmentStyle::Flat);
         lcdNumber_temp->setProperty("value", QVariant(1.000000000000000));
         lcdNumber_temp->setProperty("intValue", QVariant(1));

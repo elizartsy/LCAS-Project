@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <sys/stat.h>
+#include <QDebug>
 
 static void delay(int ms) {
     timespec ts = {.tv_sec = ms / 1000, .tv_nsec = (ms % 1000) * 1000000};
@@ -142,6 +143,8 @@ cv::Mat ThermalCameraManager::getThermalFrame(int camIndex) {
 }
 
 bool ThermalCameraManager::checkAndSaveIfThresholdExceeded(int camIndex, const cv::Mat& displayImage) {
+    qDebug() << "Current threshold is:" << tempThreshold;
+    
     for (int i = 0; i < N_PIXEL; i++) {
         if (pixelData[i] > tempThreshold) {
             time_t now = time(0);
