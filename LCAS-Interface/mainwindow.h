@@ -38,7 +38,7 @@ private slots:
 private:
     Ui::MainWindow *ui;
     QTimer* updateTimer;
-    ThermalCameraManager thermalManager;
+    
 
     QThread* thermalThreads[4];
     ThermalWorker* thermalWorkers[4];

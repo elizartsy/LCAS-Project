@@ -4,6 +4,7 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 #include <QMutex>
+#include <atomic>
 
 class ThermalCameraManager {
 public:
@@ -40,7 +41,7 @@ private:
     double ptat;
     std::vector<double> pixelData;
 
-    double tempThreshold = 40.0;
+    std::atomic<double> tempThreshold = 40.0;
 };
 
 #endif // THERMAL_CAMERA_MANAGER_H
